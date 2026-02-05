@@ -1,0 +1,105 @@
+/* public/css/style.css - VERSÃO CONSOLIDADA E OTIMIZADA */
+
+:root {
+    /* Design System - Cores Base */
+    --primary: #0d6efd;
+    --nav-bg: #1a1d21;
+    --bg-light: #f8f9fa;
+    --border-color: #dee2e6;
+    
+    /* Variantes Soft (Otimizadas com Variáveis) */
+    --soft-info: rgba(13, 202, 240, 0.1);
+    --soft-success: rgba(25, 135, 84, 0.1);
+    --soft-secondary: rgba(108, 117, 125, 0.1);
+    --soft-danger: rgba(220, 53, 69, 0.1);
+    --soft-primary: rgba(13, 110, 253, 0.08);
+    --soft-warning: rgba(255, 193, 7, 0.1);
+}
+
+/* 1. BASE & NAVBAR */
+body {
+    background-color: var(--bg-light);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.navbar {
+    background-color: var(--nav-bg) !important;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+
+.navbar-brand {
+    font-weight: 800;
+    background: linear-gradient(45deg, #fff 30%, var(--primary));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+/* 2. TABELAS (DataTables & Auditoria) */
+#assetsTable th, #portfoliosTable th { font-weight: 600; color: #495057; }
+
+/* Ajuste de espaçamento comum para todas as tabelas principais */
+#assetsTable td, #assetsTable th,
+#portfoliosTable td, #portfoliosTable th,
+#auditTable td, #auditTable th { 
+    padding-left: 0.4rem !important; 
+    padding-right: 0.4rem !important; 
+    padding-top: 0.8rem !important;
+    padding-bottom: 0.8rem !important;
+}
+
+#assetsTable .ps-3, #portfoliosTable .ps-3, #auditTable .ps-4 { padding-left: 1rem !important; }
+#assetsTable .pe-3, #portfoliosTable .pe-3, #auditTable .pe-4 { padding-right: 1.5rem !important; }
+
+.table-rounded { border-radius: 8px; overflow: hidden; border: 1px solid var(--border-color); }
+
+.table-responsive-audit { 
+    max-height: 450px; 
+    overflow-y: auto; 
+    border-radius: 8px; 
+    border: 1px solid var(--border-color);
+}
+
+.sticky-top-table { 
+    position: sticky; top: -1px; z-index: 10; 
+    background: #f8f9fa !important; box-shadow: 0 2px 5px rgba(0,0,0,0.05); 
+}
+
+/* 3. COMPONENTES (Badges, Buttons, Cards) */
+.bg-soft-info { background-color: var(--soft-info) !important; color: #087990 !important; }
+.bg-soft-success { background-color: var(--soft-success) !important; color: #198754 !important; }
+.bg-soft-secondary { background-color: var(--soft-secondary) !important; color: #6c757d !important; }
+.bg-soft-danger { background-color: var(--soft-danger) !important; color: #dc3545 !important; }
+.bg-soft-primary { background-color: var(--soft-primary) !important; color: var(--primary) !important; }
+.bg-soft-warning { background-color: var(--soft-warning) !important; color: #856404 !important; }
+
+.btn-white { background: #fff; border: 1px solid var(--border-color) !important; transition: background 0.2s; }
+.btn-white:hover { background: #f8f9fa; }
+
+.btn-action-quick { 
+    transition: all 0.3s; border: 1px dashed var(--border-color); 
+    text-decoration: none; display: block; 
+}
+.btn-action-quick:hover { background: #fff; border-style: solid; transform: translateY(-2px); box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+
+.metric-card { transition: transform 0.2s; border: none; box-shadow: 0 2px 4px rgba(0,0,0,.05); }
+.metric-card:hover { transform: translateY(-5px); }
+
+/* 4. UTILITÁRIOS ESPECÍFICOS */
+.financial-value { font-size: 0.9rem; font-weight: 700; }
+.smaller { font-size: 0.75rem; }
+.asset-range-info { font-size: 0.75rem; color: #6c757d; margin-top: 2px; }
+.rebalanced-row { background-color: rgba(13, 202, 240, 0.03); }
+.alert-bordered-warning { border-left: 5px solid #ffc107; background-color: #fffdf5; }
+
+/* 5. Contentores de Gráficos Chart.js - Define a altura fixa */
+.chart-container {
+    position: relative;
+    /* Ajuste este valor se quiser o gráfico mais alto ou mais baixo */
+    height: 500px; 
+    width: 100%;
+}
+
+.transition { transition: all 0.3s ease-in-out; }
+.hover-shadow:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important; }
+.bg-gradient-light { background: linear-gradient(180deg, #ffffff 0%, #fcfdfe 100%); }

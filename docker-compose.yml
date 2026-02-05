@@ -1,0 +1,74 @@
+version: '3.8'
+
+services:
+  # Serviço de Aplicação (PHP)
+  app:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile # Ajustado para o caminho que você informou
+    container_name: carteira-app
+    restart: unless-stopped
+    volumes:
+      - .:/var/www/html
+    env_file:
+      - .env # Carrega automaticamente as chaves do Brevo, Google e DB
+    depends_on:
+      - db
+    networks:
+      - carteira-network
+
+  # Servidor Web (Nginx separado)
+  web:
+    image: nginx:alpine
+    container_name: carteira-web
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    volumes:
+      - .:/var/www/html
+      - ./docker/nginx/nginx.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - app
+    networks:
+      - carteira-network
+
+  # Banco de Dados (MySQL)
+  db:
+    image: mysql:8.0
+    container_name: carteira-db
+    ports:
+      - "3307:3306"
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASS}
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - carteira-network
+
+  # Interface de Gerenciamento de Banco
+  phpmyadmin:
+    image: phpmyadmin:latest
+    container_name: carteira-pma
+    restart: always
+    ports:
+      - "8081:80"
+    environment:
+      - PMA_HOST=db
+      - PMA_USER=${DB_USER}
+      - PMA_PASSWORD=${DB_PASS}
+    depends_on:
+      - db
+    networks:
+      - carteira-network
+
+networks:
+  carteira-network:
+    driver: bridge
+
+volumes:
+  mysql_data:
