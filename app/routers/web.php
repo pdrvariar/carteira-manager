@@ -56,6 +56,14 @@ function setupRoutes(Router $router) {
     $router->add('admin/assets', ['controller' => 'admin', 'action' => 'assets']);
     $router->add('admin/create-default-portfolios', ['controller' => 'admin', 'action' => 'createDefaultPortfolios']);
 
+    // --- Rotas de Carteiras (Wallets) ---
+    $router->add('wallet', ['controller' => 'wallet', 'action' => 'index']);
+    $router->add('wallet/create', ['controller' => 'wallet', 'action' => 'create']);
+    $router->add('wallet/view/{id:\d+}', ['controller' => 'wallet', 'action' => 'view']);
+    $router->add('wallet/edit/{id:\d+}', ['controller' => 'wallet', 'action' => 'edit']);
+    $router->add('wallet/update/{id:\d+}', ['controller' => 'wallet', 'action' => 'update']);
+    $router->add('wallet/delete/{id:\d+}', ['controller' => 'wallet', 'action' => 'delete']);
+
     // --- Dashboard ---
     $router->add('dashboard', ['controller' => 'home', 'action' => 'index']);
 }

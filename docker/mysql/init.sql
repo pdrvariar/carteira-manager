@@ -99,7 +99,19 @@ CREATE TABLE simulation_asset_details (
     FOREIGN KEY (asset_id) REFERENCES system_assets(id)
 ) ENGINE=InnoDB;
 
--- 9. Seeders (Dados Iniciais)
+-- 9. Tabela de Carteiras (Wallets)
+CREATE TABLE wallets (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    user_id INT NOT NULL,
+    name VARCHAR(100) NOT NULL,
+    description TEXT,
+    status ENUM('active', 'disabled') DEFAULT 'active',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- 10. Seeders (Dados Iniciais)
 INSERT INTO users (username, full_name, email, password, is_admin, status) 
 VALUES ('admin', 'Administrador do Sistema', 'admin@portfolio.com', '$2y$10$WAogU2u/zEPt4IAfozFKGOvSIxMMd3vBQPz2NCI6Ehf6Q8AGPPFxa', TRUE, 'active');
 

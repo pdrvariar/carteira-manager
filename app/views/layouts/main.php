@@ -61,6 +61,11 @@
                                 <i class="bi bi-layers me-1"></i> Ativos
                             </a>
                         </li>
+                        <li class="nav-item">
+                            <a class="nav-link <?php echo $is_active('wallet'); ?>" href="/index.php?url=<?= obfuscateUrl('wallet') ?>">
+                                <i class="bi bi-wallet me-1"></i> Carteiras
+                            </a>
+                        </li>
                     <?php endif; ?>
                 </ul>
                 

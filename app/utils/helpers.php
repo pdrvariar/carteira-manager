@@ -86,30 +86,70 @@ function logActivity($message, $userId = null) {
 function renderBreadcrumbs($params) {
     // Início sempre no Dashboard
     $breadcrumbs = [
-        // Use obfuscateUrl aqui também para manter o padrão
         ['label' => '<i class="bi bi-house-door"></i> Home', 'url' => '/index.php?url=' . obfuscateUrl('dashboard')]
     ];
 
     $controller = strtolower(str_replace('Controller', '', $params['controller'] ?? ''));
     $action = $params['action'] ?? '';
+    $id = $params['id'] ?? null;
 
     // Mapeamento de nomes amigáveis para os Controllers
     $labels = [
         'portfolio' => 'Portfólios',
         'asset'     => 'Ativos',
         'profile'   => 'Meu Perfil',
-        'admin'     => 'Admin'
+        'admin'     => 'Admin',
+        'wallet'    => 'Carteiras',
+        'auth'      => 'Autenticação',
+        'home'      => 'Dashboard'
     ];
 
+    // Se o controller existir no mapeamento, adiciona ao breadcrumb
     if (isset($labels[$controller])) {
-        $url = "/index.php?url=" . obfuscateUrl($controller); // Adicionado obfuscateUrl
+        $url = "/index.php?url=" . obfuscateUrl($controller);
         $breadcrumbs[] = ['label' => $labels[$controller], 'url' => $url];
     }
 
-    // Adiciona a ação específica (Editar, Visualizar, etc)
-    if ($action === 'view') $breadcrumbs[] = ['label' => 'Detalhes', 'url' => '#'];
-    if ($action === 'edit' || $action === 'editUser') $breadcrumbs[] = ['label' => 'Edição', 'url' => '#'];
-    if ($action === 'import') $breadcrumbs[] = ['label' => 'Importação', 'url' => '#'];
+    // Adiciona a ação específica (Editar, Visualizar, etc) com URLs corretas
+    switch ($controller) {
+        case 'wallet':
+            switch ($action) {
+                case 'create':
+                    $breadcrumbs[] = ['label' => 'Nova Carteira', 'url' => '/index.php?url=' . obfuscateUrl('wallet/create')];
+                    break;
+                case 'view':
+                    if ($id) {
+                        $breadcrumbs[] = ['label' => 'Detalhes', 'url' => '/index.php?url=' . obfuscateUrl('wallet/view/' . $id)];
+                    }
+                    break;
+                case 'edit':
+                    if ($id) {
+                        $breadcrumbs[] = ['label' => 'Edição', 'url' => '/index.php?url=' . obfuscateUrl('wallet/edit/' . $id)];
+                    }
+                    break;
+            }
+            break;
+
+        case 'portfolio':
+            switch ($action) {
+                case 'view':
+                case 'run':
+                case 'quick-update':
+                    if ($id) {
+                        $breadcrumbs[] = ['label' => 'Detalhes', 'url' => '/index.php?url=' . obfuscateUrl('portfolio/view/' . $id)];
+                    }
+                    break;
+                case 'edit':
+                    if ($id) {
+                        $breadcrumbs[] = ['label' => 'Edição', 'url' => '/index.php?url=' . obfuscateUrl('portfolio/edit/' . $id)];
+                    }
+                    break;
+                case 'create':
+                    $breadcrumbs[] = ['label' => 'Novo Portfólio', 'url' => '/index.php?url=' . obfuscateUrl('portfolio/create')];
+                    break;
+            }
+            break;
+    }
 
     $html = '<nav aria-label="breadcrumb"><ol class="breadcrumb mb-4 shadow-sm p-2 bg-white rounded">';
     foreach ($breadcrumbs as $index => $crumb) {
@@ -117,11 +157,11 @@ function renderBreadcrumbs($params) {
         $html .= sprintf(
             '<li class="breadcrumb-item %s">%s</li>',
             $active ? 'active text-primary fw-bold' : '',
-            $active ? sanitize($crumb['label']) : '<a href="'.$crumb['url'].'" class="text-decoration-none">'.$crumb['label'].'</a>'
+            $active ? sanitize(strip_tags($crumb['label'])) : '<a href="'.$crumb['url'].'" class="text-decoration-none">'.$crumb['label'].'</a>'
         );
     }
     $html .= '</ol></nav>';
-    
+
     return $html;
 }
 
