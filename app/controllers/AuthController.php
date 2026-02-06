@@ -1,9 +1,16 @@
 <?php
 
+namespace App\Controllers;
+
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 use Google\Client as GoogleClient;
 use Google\Service\Oauth2 as GoogleServiceOauth2;
+use App\Models\User;
+use App\Core\Auth;
+use App\Core\Session;
+use App\Services\EmailService;
+use DateTime;
 
 class AuthController {
     private $userModel;
@@ -278,7 +285,7 @@ class AuthController {
     }
 
     /**
-     * GET: Valida token e mostra form | POST: Grava nova senha
+     * GET: Valida token e mostra form | POST: Gera nova senha
      */
     public function resetPassword() {
         $token = $_GET['token'] ?? $_POST['token'] ?? '';

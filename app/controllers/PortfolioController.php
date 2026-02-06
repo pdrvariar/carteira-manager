@@ -1,4 +1,16 @@
 <?php
+
+namespace App\Controllers;
+
+use App\Models\Portfolio;
+use App\Models\Asset;
+use App\Models\SimulationResult;
+use App\Core\Session;
+use App\Core\Auth;
+use App\Services\BacktestService;
+use DateTime;
+use Exception;
+
 class PortfolioController {
     private $portfolioModel;
     private $params; // Adicione esta propriedade
@@ -432,7 +444,7 @@ class PortfolioController {
             
             logActivity("Alocações atualizadas para portfólio $id. Iniciando simulação.", $_SESSION['user_id'] ?? null);
             
-            if (class_exists('BacktestService')) {
+            if (class_exists(BacktestService::class)) { // Verifica usando a classe importada
                 logActivity("BacktestService encontrado. Instanciando...", $_SESSION['user_id'] ?? null);
                 $backtestService = new BacktestService();
                 logActivity("Executando simulação para portfólio $id...", $_SESSION['user_id'] ?? null);
@@ -480,4 +492,3 @@ class PortfolioController {
         exit;
     }
 }
-?>

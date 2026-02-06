@@ -1,6 +1,8 @@
 <?php
 // app/routers/web.php
 
+use App\Core\Router;
+
 function setupRoutes(Router $router) {
     // --- Rotas Públicas ---
     $router->add('', ['controller' => 'home', 'action' => 'index']);

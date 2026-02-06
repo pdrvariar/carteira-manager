@@ -1,4 +1,12 @@
 <?php
+
+namespace App\Controllers;
+
+use App\Models\Portfolio;
+use App\Models\SimulationResult;
+use App\Core\Session;
+use App\Core\Auth;
+
 class HomeController {
     private $portfolioModel;
     private $simulationModel;
@@ -38,4 +46,3 @@ class HomeController {
         require_once __DIR__ . '/../views/home/dashboard.php';
     }
 }
-?>

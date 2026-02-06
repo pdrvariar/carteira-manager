@@ -3,6 +3,8 @@
  * @var array $portfolios Lista de portfólios do usuário
  */
 
+use App\Core\Auth;
+
 $title = 'Meus Portfólios';
 ob_start();
 ?>

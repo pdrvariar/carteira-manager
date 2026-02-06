@@ -1,6 +1,12 @@
 <?php
 // app/controllers/WalletController.php
 
+namespace App\Controllers;
+
+use App\Models\Wallet;
+use App\Core\Session;
+use App\Core\Auth;
+
 class WalletController {
     private $walletModel;
     private $params;
@@ -139,4 +145,3 @@ class WalletController {
         exit;
     }
 }
-?>

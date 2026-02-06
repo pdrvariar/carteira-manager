@@ -1,6 +1,14 @@
 <?php
+
+namespace App\Controllers;
+
+use App\Models\Asset;
+use App\Core\Session;
+use App\Core\Auth;
+use Exception;
+
 class AssetController {
-private $assetModel;
+    private $assetModel;
     private $params; // Adicione esta propriedade
 
     public function __construct($params = []) { // Receba os parâmetros aqui
@@ -244,4 +252,3 @@ private $assetModel;
     }
 
 }
-?>

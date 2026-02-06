@@ -1,5 +1,8 @@
 <?php
-// app/core/Session.php - CORRIGIDO
+// app/core/Session.php
+
+namespace App\Core;
+
 class Session {
     public static function start() {
         if (session_status() === PHP_SESSION_NONE) {
@@ -88,4 +91,3 @@ class Session {
         return false;
     }
 }
-?>

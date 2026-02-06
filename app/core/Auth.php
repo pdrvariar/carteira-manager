@@ -1,6 +1,8 @@
 <?php
 // app/core/Auth.php
 
+namespace App\Core;
+
 class Auth {
     /**
      * Protege rotas que exigem login

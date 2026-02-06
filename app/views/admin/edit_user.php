@@ -2,6 +2,9 @@
 /**
  * @var array $user Dados do usuário a ser editado
  */
+
+use App\Core\Session;
+
 $title = 'Editar Usuário: ' . htmlspecialchars($user['username']);
 ob_start();
 ?>

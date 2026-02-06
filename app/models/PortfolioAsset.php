@@ -1,4 +1,9 @@
 <?php
+
+namespace App\Models;
+
+use App\Core\Database;
+
 class PortfolioAsset {
     private $db;
     
@@ -47,4 +52,3 @@ class PortfolioAsset {
         return abs($result['total'] - 1.0) < 0.00000001;
     }
 }
-?>

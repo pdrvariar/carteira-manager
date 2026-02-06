@@ -7,6 +7,10 @@
  * @var array $chartData Dados formatados para os gráficos JS
  */
 
+use App\Core\Auth;
+use App\Core\Session;
+use App\Models\Asset;
+
 $title = 'Resultados: ' . htmlspecialchars($portfolio['name']);
 ob_start();
 ?>

@@ -5,6 +5,10 @@
  * @var string|null $additional_css CSS extra para a página
  * @var string|null $additional_js JS extra para a página
  */
+
+use App\Core\Auth;
+use App\Core\Session;
+
 ?>
 <!DOCTYPE html>
 <html lang="pt-BR" class="h-100">

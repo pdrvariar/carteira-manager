@@ -3,6 +3,10 @@
  * @var array $asset Dados do ativo (id, code, name, currency, asset_type)
  * @var array $historicalData Lista de registros históricos (reference_date, price)
  */
+
+use App\Core\Auth;
+use App\Core\Session;
+
 $title = $asset['name'] . ' - Detalhes';
 ob_start();
 ?>

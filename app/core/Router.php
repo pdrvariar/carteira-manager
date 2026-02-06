@@ -1,4 +1,7 @@
 <?php
+
+namespace App\Core;
+
 class Router {
     private $routes = [];
     private $params = [];
@@ -24,7 +27,8 @@ class Router {
         if ($this->match($url)) {
             $controller = $this->params['controller'];
             $controller = $this->convertToStudlyCaps($controller);
-            $controller = "{$controller}Controller";
+            // Ajuste PSR-4: Adiciona o namespace completo dos Controllers
+            $controller = "App\\Controllers\\{$controller}Controller";
             
             if (class_exists($controller)) {
                 $controller_object = new $controller($this->params);
@@ -96,4 +100,3 @@ class Router {
         return $this->params;
     }
 }
-?>

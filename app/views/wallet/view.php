@@ -1,6 +1,8 @@
 <?php
 // app/views/wallet/view.php
 
+use App\Core\Session;
+
 $title = 'Carteira: ' . htmlspecialchars($wallet['name']);
 ob_start();
 ?>

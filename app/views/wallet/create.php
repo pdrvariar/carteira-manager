@@ -1,6 +1,8 @@
 <?php
 // app/views/wallet/create.php
 
+use App\Core\Session;
+
 $title = 'Nova Carteira';
 ob_start();
 ?>

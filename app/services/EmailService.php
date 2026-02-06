@@ -1,6 +1,8 @@
 <?php
 // app/services/EmailService.php
 
+namespace App\Services;
+
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 

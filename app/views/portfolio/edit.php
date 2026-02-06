@@ -5,6 +5,8 @@
  * @var array $portfolioAssets Ativos já vinculados a este portfólio
  */
 
+use App\Core\Session;
+
 $title = 'Editar Portfólio: ' . htmlspecialchars($portfolio['name']);
 ob_start();
 ?>

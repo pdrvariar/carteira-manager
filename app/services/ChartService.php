@@ -1,4 +1,7 @@
 <?php
+
+namespace App\Services;
+
 class ChartService {
     
     public function createValueChart($results) {
@@ -338,4 +341,3 @@ class ChartService {
     }
 
 }
-?>

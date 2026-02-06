@@ -1,4 +1,10 @@
 <?php
+
+namespace App\Models;
+
+use App\Core\Database;
+use Exception;
+
 class Asset {
     private $db;
     
@@ -415,4 +421,3 @@ class Asset {
         return $result['count'] > 0;
     }
 }
-?>

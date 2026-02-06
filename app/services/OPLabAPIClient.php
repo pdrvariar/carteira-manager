@@ -5,7 +5,7 @@ namespace App\Services;
 
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
-use Env; // Importa a classe Env do namespace global
+use App\Core\Env;
 
 class OPLabAPIClient {
     private $client;
@@ -13,12 +13,19 @@ class OPLabAPIClient {
     private $baseUrl = "https://api.oplab.com.br/v3/";
 
     public function __construct(string $accessToken = null) {
-        // Inicializa o Env
-        $this->loadEnv();
-
         // Se não passar token, tenta pegar do .env
         if ($accessToken === null) {
             $accessToken = Env::get('OPLAB_TOKEN');
+
+            if (!$accessToken) {
+                // Tenta carregar o Env caso ainda não tenha sido carregado (fallback)
+                try {
+                    Env::load();
+                    $accessToken = Env::get('OPLAB_TOKEN');
+                } catch (\Exception $e) {
+                    // Ignora erro se já estiver carregado ou arquivo não existir
+                }
+            }
 
             if (!$accessToken) {
                 throw new \Exception("Token da API OPLab não configurado. Adicione OPLAB_TOKEN no arquivo .env");
@@ -34,22 +41,6 @@ class OPLabAPIClient {
                 'Accept' => 'application/json',
             ]
         ]);
-    }
-
-    private function loadEnv() {
-        // Garante que o Env está carregado apenas uma vez
-        static $loaded = false;
-        if (!$loaded) {
-            try {
-                // Verifica se a classe Env existe antes de chamar
-                if (class_exists('Env')) {
-                    Env::load();
-                    $loaded = true;
-                }
-            } catch (\Exception $e) {
-                error_log("Erro ao carregar .env: " . $e->getMessage());
-            }
-        }
     }
 
     // Faz uma única requisição ao endpoint e normaliza a resposta

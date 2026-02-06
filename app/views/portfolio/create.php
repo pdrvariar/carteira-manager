@@ -2,6 +2,10 @@
 /**
  * @var array $assets Lista de ativos disponíveis
  */
+
+use App\Core\Session;
+use App\Models\Asset;
+
 $title = 'Criar Portfólio';
 ob_start();
 

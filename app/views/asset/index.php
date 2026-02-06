@@ -2,6 +2,10 @@
 /**
  * @var array $assets Lista de ativos (id, code, name, currency, asset_type, etc.)
  */
+
+use App\Core\Auth;
+use App\Core\Session;
+
 $title = 'Biblioteca de Ativos';
 ob_start();
 ?>

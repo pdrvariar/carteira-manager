@@ -1,6 +1,8 @@
 <?php
 // app/views/wallet/index.php
 
+use App\Core\Session;
+
 $title = 'Minhas Carteiras';
 ob_start();
 ?>

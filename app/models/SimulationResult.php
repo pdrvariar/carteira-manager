@@ -1,4 +1,9 @@
 <?php
+
+namespace App\Models;
+
+use App\Core\Database;
+
 class SimulationResult {
     private $db;
     
@@ -87,4 +92,3 @@ class SimulationResult {
         return $stmt->fetch();
     }
 }
-?>

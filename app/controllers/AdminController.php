@@ -1,4 +1,14 @@
 <?php
+
+namespace App\Controllers;
+
+use App\Models\User;
+use App\Models\Asset;
+use App\Models\Portfolio;
+use App\Core\Session;
+use App\Core\Auth;
+use App\Core\Database;
+
 class AdminController {
     private $userModel;
     private $assetModel;
@@ -192,4 +202,3 @@ class AdminController {
         return $stmt->fetchAll();
     }
 }
-?>

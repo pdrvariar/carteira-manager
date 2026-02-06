@@ -1,6 +1,10 @@
 <?php
 // app/models/Wallet.php
 
+namespace App\Models;
+
+use App\Core\Database;
+
 class Wallet {
     private $db;
 
@@ -77,9 +81,8 @@ class Wallet {
             $stmt->execute([$userId]);
         } else {
             $sql = "SELECT COUNT(*) as total FROM wallets WHERE status = 'active'";
-            $stmt = $this->db->query($sql);
+            $stmt = $this->db->query($sql); // query() é do PDO, não da classe Database, mas Database::getConnection retorna PDO
         }
         return $stmt->fetch()['total'];
     }
 }
-?>

@@ -2,6 +2,9 @@
 /**
  * @var array $user Dados formatados do utilizador para exibição no perfil
  */
+
+use App\Core\Session;
+
 $title = 'Meu Perfil';
 ob_start();
 ?>

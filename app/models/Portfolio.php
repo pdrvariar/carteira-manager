@@ -1,4 +1,10 @@
 <?php
+
+namespace App\Models;
+
+use App\Core\Database;
+use Exception;
+
 class Portfolio {
     private $db;
     
@@ -266,4 +272,3 @@ class Portfolio {
         }
     }
 }
-?>

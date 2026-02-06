@@ -1,19 +1,13 @@
 <?php
 // app/test_api.php
 
-// 1. Carrega o Autoloader do Composer (para GuzzleHttp, etc.)
 require_once __DIR__ . '/../vendor/autoload.php';
 
-// 2. Carrega a classe Env (necessária para ler o .env)
-require_once __DIR__ . '/core/Env.php';
-
-// 3. Carrega a classe OPLabAPIClient manualmente (pois não está no PSR-4 do composer)
-require_once __DIR__ . '/services/OPLabAPIClient.php';
-
+use App\Core\Env;
 use App\Services\OPLabAPIClient;
 
 try {
-    // Carrega as variáveis de ambiente explicitamente
+    // Carrega as variáveis de ambiente
     Env::load(__DIR__ . '/../.env');
 
     echo "Inicializando cliente OPLab...\n";

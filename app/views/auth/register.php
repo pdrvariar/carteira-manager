@@ -1,4 +1,6 @@
 <?php
+use App\Core\Session;
+
 $title = 'Registro - Carteira Manager';
 ob_start();
 ?>

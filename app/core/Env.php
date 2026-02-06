@@ -1,5 +1,7 @@
 <?php
-// app/Env.php
+// app/core/Env.php
+
+namespace App\Core;
 
 class Env {
     public static function load($path = null) {

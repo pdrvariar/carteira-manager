@@ -1,5 +1,11 @@
 <?php
 
+namespace App\Models;
+
+use App\Core\Database;
+use PDO;
+use PDOException;
+
 /**
  * Classe User - Modelo de Gestão de Identidade e Segurança
  * Responsável pela persistência e lógica de negócios de utilizadores.

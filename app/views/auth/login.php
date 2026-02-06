@@ -1,4 +1,6 @@
 <?php
+use App\Core\Session;
+
 $title = 'Entrar - Carteira Manager';
 ob_start();
 ?>

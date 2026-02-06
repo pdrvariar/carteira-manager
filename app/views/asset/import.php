@@ -1,4 +1,6 @@
 <?php
+use App\Core\Session;
+
 $title = 'Importar Dados - Portfolio Backtest';
 ob_start();
 ?>
