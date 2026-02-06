@@ -1,7 +1,8 @@
 {
     "require": {
         "phpmailer/phpmailer": "^7.0",
-        "google/apiclient": "^2.18"
+        "google/apiclient": "^2.18",
+        "guzzlehttp/guzzle": "^7.0"
     },
     "config": {
         "process-timeout": 9000
