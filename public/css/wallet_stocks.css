@@ -1,0 +1,215 @@
+/* public/css/wallet_stocks.css */
+/* Estilos específicos para o módulo de carteiras e ações */
+
+/* Cards de Ação com animação de hover */
+.stock-card {
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    border: 1px solid #e9ecef;
+}
+
+.stock-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1) !important;
+    border-color: #dee2e6;
+}
+
+/* Indicador de variação de preço */
+.price-change-indicator {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 8px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.price-change-positive {
+    background-color: rgba(25, 135, 84, 0.1);
+    color: #198754;
+}
+
+.price-change-negative {
+    background-color: rgba(220, 53, 69, 0.1);
+    color: #dc3545;
+}
+
+/* Progress bar customizada para alocação */
+.allocation-progress {
+    height: 8px;
+    border-radius: 4px;
+    overflow: hidden;
+    background-color: #e9ecef;
+}
+
+.allocation-progress-bar {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.6s ease;
+}
+
+/* Badges para tipos de ativos */
+.badge-stock {
+    background-color: rgba(13, 110, 253, 0.1);
+    color: #0d6efd;
+    font-weight: 500;
+}
+
+.badge-etf {
+    background-color: rgba(111, 66, 193, 0.1);
+    color: #6f42c1;
+    font-weight: 500;
+}
+
+.badge-fii {
+    background-color: rgba(32, 201, 151, 0.1);
+    color: #20c997;
+    font-weight: 500;
+}
+
+/* Layout de grid responsivo */
+.stocks-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 1.5rem;
+}
+
+/* Cards de métricas com gradiente */
+.metric-card-gradient {
+    background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+    border: none;
+    position: relative;
+    overflow: hidden;
+}
+
+.metric-card-gradient::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+    background: linear-gradient(to bottom, var(--primary), #80bdff);
+}
+
+/* Tooltip customizado para informações */
+.custom-tooltip {
+    position: relative;
+    display: inline-block;
+    cursor: help;
+}
+
+.custom-tooltip .tooltip-text {
+    visibility: hidden;
+    width: 200px;
+    background-color: #333;
+    color: #fff;
+    text-align: center;
+    border-radius: 6px;
+    padding: 8px;
+    position: absolute;
+    z-index: 1000;
+    bottom: 125%;
+    left: 50%;
+    transform: translateX(-50%);
+    opacity: 0;
+    transition: opacity 0.3s;
+    font-size: 0.85rem;
+}
+
+.custom-tooltip:hover .tooltip-text {
+    visibility: visible;
+    opacity: 1;
+}
+
+/* Formulários com validação visual */
+.form-control-validated:valid {
+    border-color: #198754;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'%3e%3cpath fill='%23198754' d='M2.3 6.73L.6 4.53c-.4-1.04.46-1.4 1.1-.8l1.1 1.4 3.4-3.8c.6-.63 1.6-.27 1.2.7l-4 4.6c-.43.5-.8.4-1.1.1z'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right calc(0.375em + 0.1875rem) center;
+    background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
+}
+
+.form-control-validated:invalid {
+    border-color: #dc3545;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' width='12' height='12' fill='none' stroke='%23dc3545'%3e%3ccircle cx='6' cy='6' r='4.5'/%3e%3cpath stroke-linejoin='round' d='M5.8 3.6h.4L6 6.5z'/%3e%3ccircle cx='6' cy='8.2' r='.6' fill='%23dc3545' stroke='none'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right calc(0.375em + 0.1875rem) center;
+    background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
+}
+
+/* Animações para atualização de preços */
+@keyframes priceUpdate {
+    0% { background-color: rgba(13, 110, 253, 0.1); }
+    50% { background-color: rgba(13, 110, 253, 0.3); }
+    100% { background-color: rgba(13, 110, 253, 0.1); }
+}
+
+.price-updating {
+    animation: priceUpdate 1.5s ease-in-out;
+}
+
+/* Cards compactos para lista */
+.stock-list-item {
+    display: flex;
+    align-items: center;
+    padding: 12px;
+    border-radius: 8px;
+    background: #fff;
+    border: 1px solid #e9ecef;
+    margin-bottom: 8px;
+    transition: all 0.2s;
+}
+
+.stock-list-item:hover {
+    background-color: #f8f9fa;
+    border-color: #dee2e6;
+}
+
+/* Tags para status */
+.tag-outdated {
+    background-color: #fff3cd;
+    color: #856404;
+    font-size: 0.7rem;
+    padding: 2px 6px;
+    border-radius: 10px;
+    display: inline-flex;
+    align-items: center;
+}
+
+.tag-updated {
+    background-color: #d1e7dd;
+    color: #0f5132;
+    font-size: 0.7rem;
+    padding: 2px 6px;
+    border-radius: 10px;
+    display: inline-flex;
+    align-items: center;
+}
+
+/* Estilos para responsividade */
+@media (max-width: 768px) {
+    .stocks-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .metric-card-gradient {
+        margin-bottom: 1rem;
+    }
+
+    .stock-card {
+        margin-bottom: 1rem;
+    }
+}
+
+/* Modo escuro (opcional) */
+@media (prefers-color-scheme: dark) {
+    .stock-card {
+        background-color: #2d3748;
+        border-color: #4a5568;
+    }
+
+    .metric-card-gradient {
+        background: linear-gradient(135deg, #2d3748 0%, #1a202c 100%);
+    }
+}

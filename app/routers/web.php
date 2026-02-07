@@ -66,6 +66,14 @@ function setupRoutes(Router $router) {
     $router->add('wallet/update/{id:\d+}', ['controller' => 'wallet', 'action' => 'update']);
     $router->add('wallet/delete/{id:\d+}', ['controller' => 'wallet', 'action' => 'delete']);
 
+    // CORREÇÃO: Usar 'wallet-stock' (kebab-case) para que o Router converta corretamente para WalletStockController
+    $router->add('wallet_stocks/index/{wallet_id:\d+}', ['controller' => 'wallet-stock', 'action' => 'index']);
+    $router->add('wallet_stocks/create/{wallet_id:\d+}', ['controller' => 'wallet-stock', 'action' => 'create']);
+    $router->add('wallet_stocks/edit/{id:\d+}', ['controller' => 'wallet-stock', 'action' => 'edit']);
+    $router->add('wallet_stocks/update/{id:\d+}', ['controller' => 'wallet-stock', 'action' => 'update']);
+    $router->add('wallet_stocks/delete/{id:\d+}', ['controller' => 'wallet-stock', 'action' => 'delete']);
+    $router->add('wallet_stocks/update_prices/{wallet_id:\d+}', ['controller' => 'wallet-stock', 'action' => 'updatePrices']);
+
     $router->add('project', ['controller' => 'project', 'action' => 'index']);
     $router->add('project/create', ['controller' => 'project', 'action' => 'create']);
     $router->add('project/view/{id:\d+}', ['controller' => 'project', 'action' => 'view']);

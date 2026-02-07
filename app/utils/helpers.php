@@ -102,7 +102,8 @@ function renderBreadcrumbs($params) {
         'wallet'    => 'Carteiras',
         'project'    => 'Projetos',
         'auth'      => 'Autenticação',
-        'home'      => 'Dashboard'
+        'home'      => 'Dashboard',
+        'walletstock' => 'Composição'
     ];
 
     // Se o controller existir no mapeamento, adiciona ao breadcrumb
@@ -165,6 +166,29 @@ function renderBreadcrumbs($params) {
                 case 'edit':
                     if ($id) {
                         $breadcrumbs[] = ['label' => 'Edição', 'url' => '/index.php?url=' . obfuscateUrl('project/edit/' . $id)];
+                    }
+                    break;
+            }
+            break;
+
+        case 'walletstock':
+            switch ($action) {
+                case 'index':
+                    if ($id) {
+                        // $id aqui é o wallet_id
+                        $breadcrumbs[] = ['label' => 'Composição', 'url' => '/index.php?url=' . obfuscateUrl('wallet_stocks/index/' . $id)];
+                    }
+                    break;
+                case 'create':
+                    if ($id) {
+                        // $id aqui é o wallet_id
+                        $breadcrumbs[] = ['label' => 'Nova Ação', 'url' => '/index.php?url=' . obfuscateUrl('wallet_stocks/create/' . $id)];
+                    }
+                    break;
+                case 'edit':
+                    if ($id) {
+                        // $id aqui é o stock_id
+                        $breadcrumbs[] = ['label' => 'Editar Ação', 'url' => '/index.php?url=' . obfuscateUrl('wallet_stocks/edit/' . $id)];
                     }
                     break;
             }

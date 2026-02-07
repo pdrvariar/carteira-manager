@@ -1,0 +1,267 @@
+<?php
+// app/views/wallet_stocks/index.php
+
+use App\Core\Session;
+
+$title = 'Composição: ' . htmlspecialchars($wallet['name']);
+$additional_css = '<link rel="stylesheet" href="/css/wallet_stocks.css">';
+ob_start();
+?>
+
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h2 class="fw-bold mb-1">
+                        <i class="bi bi-wallet me-2"></i><?= htmlspecialchars($wallet['name']) ?>
+                    </h2>
+                    <p class="text-muted small mb-0">
+                        <i class="bi bi-pie-chart me-1"></i> Composição da Carteira
+                    </p>
+                </div>
+                <div class="d-flex gap-2">
+                    <a href="/index.php?url=<?= obfuscateUrl('wallet_stocks/update_prices/' . $wallet['id']) ?>"
+                       class="btn btn-outline-primary rounded-pill px-4">
+                        <i class="bi bi-arrow-clockwise me-2"></i> Atualizar Preços
+                    </a>
+                    <a href="/index.php?url=<?= obfuscateUrl('wallet_stocks/create/' . $wallet['id']) ?>"
+                       class="btn btn-primary rounded-pill px-4">
+                        <i class="bi bi-plus-lg me-2"></i> Nova Ação
+                    </a>
+                </div>
+            </div>
+
+            <!-- Cards de Resumo -->
+            <div class="row mb-4">
+                <div class="col-xl-3 col-md-6 mb-4">
+                    <div class="card border-0 shadow-sm rounded-4 metric-card">
+                        <div class="card-body p-4">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="text-muted mb-2">Total Investido</h6>
+                                    <h3 class="fw-bold text-primary">R$ <?= number_format($summary['total_invested'] ?? 0, 2, ',', '.') ?></h3>
+                                </div>
+                                <div class="bg-primary bg-opacity-10 rounded-circle p-3">
+                                    <i class="bi bi-cash-coin text-primary fs-4"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-xl-3 col-md-6 mb-4">
+                    <div class="card border-0 shadow-sm rounded-4 metric-card">
+                        <div class="card-body p-4">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="text-muted mb-2">Valor Atual</h6>
+                                    <h3 class="fw-bold text-success">R$ <?= number_format($summary['current_value'] ?? 0, 2, ',', '.') ?></h3>
+                                </div>
+                                <div class="bg-success bg-opacity-10 rounded-circle p-3">
+                                    <i class="bi bi-graph-up text-success fs-4"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-xl-3 col-md-6 mb-4">
+                    <div class="card border-0 shadow-sm rounded-4 metric-card">
+                        <div class="card-body p-4">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="text-muted mb-2">Lucro/Prejuízo</h6>
+                                    <h3 class="fw-bold <?= ($summary['total_pl'] ?? 0) >= 0 ? 'text-success' : 'text-danger' ?>">
+                                        R$ <?= number_format($summary['total_pl'] ?? 0, 2, ',', '.') ?>
+                                    </h3>
+                                </div>
+                                <div class="<?= ($summary['total_pl'] ?? 0) >= 0 ? 'bg-success' : 'bg-danger' ?> bg-opacity-10 rounded-circle p-3">
+                                    <i class="bi <?= ($summary['total_pl'] ?? 0) >= 0 ? 'bi-arrow-up-right text-success' : 'bi-arrow-down-right text-danger' ?> fs-4"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-xl-3 col-md-6 mb-4">
+                    <div class="card border-0 shadow-sm rounded-4 metric-card">
+                        <div class="card-body p-4">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="text-muted mb-2">Total de Ações</h6>
+                                    <h3 class="fw-bold text-info"><?= $summary['total_stocks'] ?? 0 ?></h3>
+                                    <small class="text-muted"><?= $summary['total_quantity'] ?? 0 ?> cotas</small>
+                                </div>
+                                <div class="bg-info bg-opacity-10 rounded-circle p-3">
+                                    <i class="bi bi-bar-chart text-info fs-4"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Cards das Ações -->
+            <?php if (empty($stocks)): ?>
+                <div class="card border-0 shadow-sm rounded-4">
+                    <div class="card-body text-center py-5">
+                        <div class="mb-3">
+                            <i class="bi bi-pie-chart text-muted" style="font-size: 3rem;"></i>
+                        </div>
+                        <h5 class="text-muted mb-3">Nenhuma ação na carteira</h5>
+                        <p class="text-muted mb-4">Adicione ações para começar a compor sua carteira de investimentos.</p>
+                        <a href="/index.php?url=<?= obfuscateUrl('wallet_stocks/create/' . $wallet['id']) ?>" class="btn btn-primary px-4">
+                            <i class="bi bi-plus-lg me-1"></i> Adicionar Primeira Ação
+                        </a>
+                    </div>
+                </div>
+            <?php else: ?>
+                <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+                    <?php foreach ($stocks as $stock):
+                        $currentValue = $stock['quantity'] * $stock['last_price'];
+                        $profitLoss = $currentValue - $stock['total_invested'];
+                        $profitLossPercent = $stock['total_invested'] > 0 ? ($profitLoss / $stock['total_invested'] * 100) : 0;
+                        ?>
+                        <div class="col">
+                            <div class="card h-100 border-0 shadow-sm rounded-4 hover-shadow transition-all">
+                                <div class="card-header bg-white border-0 pt-4 pb-2">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div>
+                                            <div class="d-flex align-items-center gap-2 mb-2">
+                                                <div class="bg-primary bg-opacity-10 rounded-circle p-2">
+                                                    <i class="bi bi-currency-dollar text-primary"></i>
+                                                </div>
+                                                <div>
+                                                    <h5 class="card-title mb-0 fw-bold"><?= htmlspecialchars($stock['ticker']) ?></h5>
+                                                    <small class="text-muted">Ação</small>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="dropdown">
+                                            <button class="btn btn-sm btn-outline-secondary border-0" type="button" data-bs-toggle="dropdown">
+                                                <i class="bi bi-three-dots-vertical"></i>
+                                            </button>
+                                            <ul class="dropdown-menu shadow-sm border-0">
+                                                <li>
+                                                    <a class="dropdown-item" href="/index.php?url=<?= obfuscateUrl('wallet_stocks/edit/' . $stock['id']) ?>">
+                                                        <i class="bi bi-pencil me-2"></i> Editar
+                                                    </a>
+                                                </li>
+                                                <li>
+                                                    <a class="dropdown-item text-danger"
+                                                       href="/index.php?url=<?= obfuscateUrl('wallet_stocks/delete/' . $stock['id']) ?>"
+                                                       onclick="return confirm('Tem certeza que deseja remover esta ação da carteira?')">
+                                                        <i class="bi bi-trash me-2"></i> Remover
+                                                    </a>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="card-body p-4 pt-2">
+                                    <!-- Informações da Ação -->
+                                    <div class="mb-4">
+                                        <div class="row g-3">
+                                            <div class="col-6">
+                                                <small class="text-muted d-block">Quantidade</small>
+                                                <div class="fw-bold fs-5"><?= number_format($stock['quantity']) ?></div>
+                                            </div>
+                                            <div class="col-6">
+                                                <small class="text-muted d-block">Preço Médio</small>
+                                                <div class="fw-bold fs-5">R$ <?= number_format($stock['average_cost_per_share'], 2, ',', '.') ?></div>
+                                            </div>
+                                            <div class="col-6">
+                                                <small class="text-muted d-block">Último Preço</small>
+                                                <div class="fw-bold fs-5">
+                                                    R$ <?= $stock['last_price'] ? number_format($stock['last_price'], 2, ',', '.') : 'N/A' ?>
+                                                    <?php if ($stock['last_market_price_updated']): ?>
+                                                        <small class="d-block text-muted smaller">
+                                                            <i class="bi bi-clock-history me-1"></i>
+                                                            <?= date('d/m H:i', strtotime($stock['last_market_price_updated'])) ?>
+                                                        </small>
+                                                    <?php endif; ?>
+                                                </div>
+                                            </div>
+                                            <div class="col-6">
+                                                <small class="text-muted d-block">Alocação Alvo</small>
+                                                <div class="fw-bold fs-5"><?= number_format($stock['target_allocation'] * 100, 1) ?>%</div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Performance -->
+                                    <div class="bg-light rounded-3 p-3 mb-3">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <div>
+                                                <small class="text-muted d-block">Investimento Total</small>
+                                                <div class="fw-bold">R$ <?= number_format($stock['total_invested'], 2, ',', '.') ?></div>
+                                            </div>
+                                            <div class="text-end">
+                                                <small class="text-muted d-block">Valor Atual</small>
+                                                <div class="fw-bold">R$ <?= number_format($currentValue, 2, ',', '.') ?></div>
+                                            </div>
+                                        </div>
+
+                                        <div class="progress mt-2" style="height: 6px;">
+                                            <div class="progress-bar bg-primary"
+                                                 style="width: <?= min(100, ($currentValue / max(1, $summary['current_value'])) * 100) ?>%"></div>
+                                        </div>
+
+                                        <div class="d-flex justify-content-between mt-3">
+                                            <div>
+                                                <small class="text-muted d-block">Lucro/Prejuízo</small>
+                                                <div class="fw-bold <?= $profitLoss >= 0 ? 'text-success' : 'text-danger' ?>">
+                                                    R$ <?= number_format($profitLoss, 2, ',', '.') ?>
+                                                </div>
+                                            </div>
+                                            <div class="text-end">
+                                                <small class="text-muted d-block">Variação</small>
+                                                <div class="fw-bold <?= $profitLossPercent >= 0 ? 'text-success' : 'text-danger' ?>">
+                                                    <?= ($profitLossPercent >= 0 ? '+' : '') ?><?= number_format($profitLossPercent, 2, ',', '.') ?>%
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="card-footer bg-white border-0 pt-3 border-top">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <small class="text-muted">
+                                            <i class="bi bi-calendar3 me-1"></i>
+                                            Adicionado em <?= date('d/m/Y', strtotime($stock['created_at'])) ?>
+                                        </small>
+                                        <a href="/index.php?url=<?= obfuscateUrl('wallet_stocks/edit/' . $stock['id']) ?>"
+                                           class="btn btn-sm btn-outline-primary rounded-pill px-3">
+                                            <i class="bi bi-pencil me-1"></i> Editar
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+
+                <div class="mt-4 text-muted small">
+                    <i class="bi bi-info-circle me-1"></i>
+                    Total de <?= count($stocks) ?> ação(ões) na carteira
+                </div>
+            <?php endif; ?>
+
+            <!-- Botões de Navegação -->
+            <div class="d-flex justify-content-between mt-5 pt-4 border-top">
+                <a href="/index.php?url=<?= obfuscateUrl('wallet') ?>" class="btn btn-outline-secondary px-4 rounded-pill">
+                    <i class="bi bi-arrow-left me-1"></i> Voltar para Carteiras
+                </a>
+                <a href="/index.php?url=<?= obfuscateUrl('wallet/view/' . $wallet['id']) ?>" class="btn btn-outline-primary px-4 rounded-pill">
+                    <i class="bi bi-eye me-1"></i> Ver Detalhes da Carteira
+                </a>
+            </div>
+        </div>
+    </div>
+
+<?php
+$content = ob_get_clean();
+include_once __DIR__ . '/../layouts/main.php';
+?>

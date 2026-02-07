@@ -169,3 +169,9 @@ CREATE TABLE wallet_stocks (
     INDEX idx_wallet_id (wallet_id),
     INDEX idx_ticker (ticker)
 ) ENGINE=InnoDB;
+
+ALTER TABLE wallets
+ADD COLUMN total_invested DECIMAL(15,2) DEFAULT 0.00,
+ADD COLUMN current_value DECIMAL(15,2) DEFAULT 0.00,
+ADD COLUMN profit_loss DECIMAL(15,2) DEFAULT 0.00,
+ADD COLUMN last_rebalanced_at TIMESTAMP NULL;

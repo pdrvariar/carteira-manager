@@ -135,6 +135,12 @@ ob_start();
                                         <a href="/index.php?url=<?= obfuscateUrl('wallet/edit/' . $wallet['id']) ?>" class="btn btn-outline-primary rounded-pill">
                                             <i class="bi bi-pencil me-2"></i> Editar Carteira
                                         </a>
+
+                                        <a href="/index.php?url=<?= obfuscateUrl('wallet_stocks/index/' . $wallet['id']) ?>"
+                                           class="btn btn-outline-primary rounded-pill">
+                                            <i class="bi bi-pie-chart me-2"></i> Ver Composição
+                                        </a>
+
                                         <?php if ($wallet['status'] == 'active'): ?>
                                             <a href="/index.php?url=<?= obfuscateUrl('wallet/delete/' . $wallet['id']) ?>"
                                                class="btn btn-outline-danger rounded-pill"
@@ -142,9 +148,12 @@ ob_start();
                                                 <i class="bi bi-trash me-2"></i> Desativar
                                             </a>
                                         <?php endif; ?>
+
                                         <a href="/index.php?url=<?= obfuscateUrl('wallet') ?>" class="btn btn-outline-secondary rounded-pill">
                                             <i class="bi bi-arrow-left me-2"></i> Voltar
                                         </a>
+
+
                                     </div>
                                 </div>
                             </div>
