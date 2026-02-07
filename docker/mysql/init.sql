@@ -151,3 +151,21 @@ ADD COLUMN total_invested DECIMAL(15,2) DEFAULT 0,
 ADD COLUMN interest_earned DECIMAL(15,2) DEFAULT 0,
 ADD COLUMN roi DECIMAL(10,4) DEFAULT 0,
 ADD COLUMN strategy_return DECIMAL(10,4) DEFAULT 0;
+
+CREATE TABLE wallet_stocks (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    wallet_id INT NOT NULL,
+    ticker VARCHAR(20) NOT NULL,
+    quantity INT NOT NULL,
+    average_cost_per_share DECIMAL(10,2) NOT NULL,
+    total_cost DECIMAL(15,2) NOT NULL,
+    last_market_price DECIMAL(10,2) NULL,
+    last_market_price_updated TIMESTAMP NULL,
+    target_allocation DECIMAL(7,5) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (wallet_id) REFERENCES wallets(id) ON DELETE CASCADE,
+    UNIQUE KEY unique_wallet_ticker (wallet_id, ticker),
+    INDEX idx_wallet_id (wallet_id),
+    INDEX idx_ticker (ticker)
+) ENGINE=InnoDB;

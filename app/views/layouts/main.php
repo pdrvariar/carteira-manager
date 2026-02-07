@@ -70,6 +70,12 @@ use App\Core\Session;
                                 <i class="bi bi-wallet me-1"></i> Carteiras
                             </a>
                         </li>
+                        <!-- Adicionar no menu após o item "Carteiras" -->
+                        <li class="nav-item">
+                            <a class="nav-link <?php echo $is_active('project'); ?>" href="/index.php?url=<?= obfuscateUrl('project') ?>">
+                                <i class="bi bi-kanban me-1"></i> Projetos
+                            </a>
+                        </li>
                     <?php endif; ?>
                 </ul>
                 

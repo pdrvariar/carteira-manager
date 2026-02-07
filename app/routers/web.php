@@ -66,6 +66,14 @@ function setupRoutes(Router $router) {
     $router->add('wallet/update/{id:\d+}', ['controller' => 'wallet', 'action' => 'update']);
     $router->add('wallet/delete/{id:\d+}', ['controller' => 'wallet', 'action' => 'delete']);
 
+    $router->add('project', ['controller' => 'project', 'action' => 'index']);
+    $router->add('project/create', ['controller' => 'project', 'action' => 'create']);
+    $router->add('project/view/{id:\d+}', ['controller' => 'project', 'action' => 'view']);
+    $router->add('project/edit/{id:\d+}', ['controller' => 'project', 'action' => 'edit']);
+    $router->add('project/update/{id:\d+}', ['controller' => 'project', 'action' => 'update']);
+    $router->add('project/delete/{id:\d+}', ['controller' => 'project', 'action' => 'delete']);
+    $router->add('project/restore/{id:\d+}', ['controller' => 'project', 'action' => 'restore']);
+
     // --- Dashboard ---
     $router->add('dashboard', ['controller' => 'home', 'action' => 'index']);
 }

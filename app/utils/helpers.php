@@ -100,6 +100,7 @@ function renderBreadcrumbs($params) {
         'profile'   => 'Meu Perfil',
         'admin'     => 'Admin',
         'wallet'    => 'Carteiras',
+        'project'    => 'Projetos',
         'auth'      => 'Autenticação',
         'home'      => 'Dashboard'
     ];
@@ -146,6 +147,25 @@ function renderBreadcrumbs($params) {
                     break;
                 case 'create':
                     $breadcrumbs[] = ['label' => 'Novo Portfólio', 'url' => '/index.php?url=' . obfuscateUrl('portfolio/create')];
+                    break;
+            }
+            break;
+
+        // Adicionar no switch case do controller 'project':
+        case 'project':
+            switch ($action) {
+                case 'create':
+                    $breadcrumbs[] = ['label' => 'Novo Projeto', 'url' => '/index.php?url=' . obfuscateUrl('project/create')];
+                    break;
+                case 'view':
+                    if ($id) {
+                        $breadcrumbs[] = ['label' => 'Detalhes', 'url' => '/index.php?url=' . obfuscateUrl('project/view/' . $id)];
+                    }
+                    break;
+                case 'edit':
+                    if ($id) {
+                        $breadcrumbs[] = ['label' => 'Edição', 'url' => '/index.php?url=' . obfuscateUrl('project/edit/' . $id)];
+                    }
                     break;
             }
             break;
