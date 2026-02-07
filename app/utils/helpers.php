@@ -89,9 +89,11 @@ function renderBreadcrumbs($params) {
         ['label' => '<i class="bi bi-house-door"></i> Home', 'url' => '/index.php?url=' . obfuscateUrl('dashboard')]
     ];
 
-    $controller = strtolower(str_replace('Controller', '', $params['controller'] ?? ''));
+    // CORREÇÃO: Removemos também o hífen '-' para normalizar 'wallet-stock' para 'walletstock'
+    $controller = strtolower(str_replace(['Controller', '-'], '', $params['controller'] ?? ''));
     $action = $params['action'] ?? '';
     $id = $params['id'] ?? null;
+    $walletId = $params['wallet_id'] ?? null;
 
     // Mapeamento de nomes amigáveis para os Controllers
     $labels = [
@@ -108,8 +110,11 @@ function renderBreadcrumbs($params) {
 
     // Se o controller existir no mapeamento, adiciona ao breadcrumb
     if (isset($labels[$controller])) {
-        $url = "/index.php?url=" . obfuscateUrl($controller);
-        $breadcrumbs[] = ['label' => $labels[$controller], 'url' => $url];
+        // Se for walletstock, não adicionamos o link direto para "Composição" aqui, pois depende do ID da carteira
+        if ($controller !== 'walletstock') {
+            $url = "/index.php?url=" . obfuscateUrl($controller);
+            $breadcrumbs[] = ['label' => $labels[$controller], 'url' => $url];
+        }
     }
 
     // Adiciona a ação específica (Editar, Visualizar, etc) com URLs corretas
@@ -172,24 +177,38 @@ function renderBreadcrumbs($params) {
             break;
 
         case 'walletstock':
+            // Para walletstock, precisamos reconstruir o caminho: Home > Carteiras > Detalhes > Composição
+            
+            // 1. Adiciona "Carteiras"
+            $breadcrumbs[] = ['label' => 'Carteiras', 'url' => '/index.php?url=' . obfuscateUrl('wallet')];
+
+            // 2. Tenta obter o ID da carteira para adicionar "Detalhes"
+            $currentWalletId = $walletId;
+            
+            // Se estiver editando uma ação, precisamos buscar o wallet_id (que não vem na URL, mas podemos tentar inferir ou deixar sem link)
+            // Como não temos acesso ao banco aqui facilmente, se não tiver wallet_id na URL, pulamos o link de detalhes
+            
+            if ($currentWalletId) {
+                $breadcrumbs[] = ['label' => 'Detalhes', 'url' => '/index.php?url=' . obfuscateUrl('wallet/view/' . $currentWalletId)];
+            }
+
             switch ($action) {
                 case 'index':
-                    if ($id) {
-                        // $id aqui é o wallet_id
-                        $breadcrumbs[] = ['label' => 'Composição', 'url' => '/index.php?url=' . obfuscateUrl('wallet_stocks/index/' . $id)];
+                    if ($currentWalletId) {
+                        $breadcrumbs[] = ['label' => 'Composição', 'url' => '/index.php?url=' . obfuscateUrl('wallet_stocks/index/' . $currentWalletId)];
                     }
                     break;
                 case 'create':
-                    if ($id) {
-                        // $id aqui é o wallet_id
-                        $breadcrumbs[] = ['label' => 'Nova Ação', 'url' => '/index.php?url=' . obfuscateUrl('wallet_stocks/create/' . $id)];
+                    if ($currentWalletId) {
+                        $breadcrumbs[] = ['label' => 'Composição', 'url' => '/index.php?url=' . obfuscateUrl('wallet_stocks/index/' . $currentWalletId)];
+                        $breadcrumbs[] = ['label' => 'Nova Ação', 'url' => '/index.php?url=' . obfuscateUrl('wallet_stocks/create/' . $currentWalletId)];
                     }
                     break;
                 case 'edit':
-                    if ($id) {
-                        // $id aqui é o stock_id
-                        $breadcrumbs[] = ['label' => 'Editar Ação', 'url' => '/index.php?url=' . obfuscateUrl('wallet_stocks/edit/' . $id)];
-                    }
+                    // Na edição, só temos o ID da ação ($id), não o da carteira ($walletId).
+                    // O ideal seria passar o wallet_id na view, mas aqui estamos no helper.
+                    // Vamos deixar apenas "Editar Ação" como último item.
+                    $breadcrumbs[] = ['label' => 'Editar Ação', 'url' => '#'];
                     break;
             }
             break;

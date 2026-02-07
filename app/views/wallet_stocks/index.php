@@ -139,10 +139,12 @@ ob_start();
                                         </div>
 
                                         <div class="dropdown">
-                                            <button class="btn btn-sm btn-outline-secondary border-0" type="button" data-bs-toggle="dropdown">
+                                            <!-- CORREÇÃO: Adicionado data-bs-display="static" para evitar que o menu seja cortado ou fique escondido -->
+                                            <button class="btn btn-sm btn-outline-secondary border-0" type="button" data-bs-toggle="dropdown" aria-expanded="false" data-bs-display="static">
                                                 <i class="bi bi-three-dots-vertical"></i>
                                             </button>
-                                            <ul class="dropdown-menu shadow-sm border-0">
+                                            <!-- CORREÇÃO: Adicionado z-index alto e alinhamento à direita -->
+                                            <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0" style="z-index: 1050;">
                                                 <li>
                                                     <a class="dropdown-item" href="/index.php?url=<?= obfuscateUrl('wallet_stocks/edit/' . $stock['id']) ?>">
                                                         <i class="bi bi-pencil me-2"></i> Editar
