@@ -42,6 +42,13 @@ class WalletStockController {
         $stocks = $this->walletStockModel->findByWalletId($walletId);
         $summary = $this->walletStockModel->getWalletSummary($walletId);
 
+        // CALCULAR SOMA DAS ALOCAÇÕES
+        $totalAllocation = 0;
+        foreach ($stocks as $stock) {
+            $totalAllocation += $stock['target_allocation'];
+        }
+        $totalAllocationPercent = $totalAllocation * 100;
+
         require_once __DIR__ . '/../views/wallet_stocks/index.php';
     }
 

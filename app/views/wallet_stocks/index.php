@@ -10,6 +10,42 @@ ob_start();
 
     <div class="row">
         <div class="col-lg-12">
+            <!-- Alerta de Alocação (aparece apenas se não estiver em 100%) -->
+            <?php if (isset($totalAllocationPercent) && abs($totalAllocationPercent - 100) > 0.01): ?>
+                <div class="alert
+                    <?= $totalAllocationPercent > 100 ? 'alert-warning' : 'alert-info' ?>
+                    border-0 rounded-4 shadow-sm mb-4 d-flex align-items-center">
+                    <div class="me-3">
+                        <i class="bi
+                            <?= $totalAllocationPercent > 100 ? 'bi-exclamation-triangle-fill' : 'bi-info-circle-fill' ?>
+                            fs-4"></i>
+                    </div>
+                    <div class="flex-grow-1">
+                        <h6 class="fw-bold mb-1">
+                            <?= $totalAllocationPercent > 100 ? 'Alocação Excedida' : 'Alocação Incompleta' ?>
+                        </h6>
+                        <p class="mb-0 small">
+                            A soma das alocações está em <strong><?= number_format($totalAllocationPercent, 1) ?>%</strong>.
+                            <?php if ($totalAllocationPercent > 100): ?>
+                                Você está alocando <strong><?= number_format($totalAllocationPercent - 100, 1) ?>%</strong> a mais do que o total disponível.
+                                <br><small><strong>Dica:</strong> Ajuste as alocações das ações existentes ou remova alguma ação.</small>
+                            <?php else: ?>
+                                Ainda há <strong><?= number_format(100 - $totalAllocationPercent, 1) ?>%</strong> disponível para alocar.
+                            <?php endif; ?>
+                        </p>
+                    </div>
+                    <?php if ($totalAllocationPercent < 100): ?>
+                        <div class="ms-auto">
+                            <a href="/index.php?url=<?= obfuscateUrl('wallet_stocks/create/' . $wallet['id']) ?>"
+                               class="btn btn-sm btn-info rounded-pill px-3">
+                                <i class="bi bi-plus-lg me-1"></i>
+                                Adicionar Ações
+                            </a>
+                        </div>
+                    <?php endif; ?>
+                </div>
+            <?php endif; ?>
+
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <div>
                     <h2 class="fw-bold mb-1">
@@ -99,6 +135,104 @@ ob_start();
                         </div>
                     </div>
                 </div>
+
+                <!-- Card de Alocação Total -->
+                <?php if (isset($totalAllocationPercent)): ?>
+                    <div class="col-xl-3 col-md-6 mb-4">
+                        <div class="card border-0 shadow-sm rounded-4 metric-card
+                        <?=
+                        abs($totalAllocationPercent - 100) < 0.01 ? 'allocation-perfect border-success' :
+                                ($totalAllocationPercent > 100 ? 'allocation-over border-warning' : 'allocation-under border-info')
+                        ?>">
+                            <div class="card-body p-4">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h6 class="text-muted mb-2">Alocação Total</h6>
+                                        <h3 class="fw-bold
+                                        <?=
+                                        abs($totalAllocationPercent - 100) < 0.01 ? 'text-success' :
+                                                ($totalAllocationPercent > 100 ? 'text-warning' : 'text-info')
+                                        ?>">
+                                            <?= number_format($totalAllocationPercent, 1) ?>%
+                                        </h3>
+                                        <small class="text-muted">Meta: 100%</small>
+                                    </div>
+                                    <div class="
+                                    <?=
+                                    abs($totalAllocationPercent - 100) < 0.01 ? 'bg-success' :
+                                            ($totalAllocationPercent > 100 ? 'bg-warning' : 'bg-info')
+                                    ?> bg-opacity-10 rounded-circle p-3">
+                                        <i class="bi
+                                        <?=
+                                        abs($totalAllocationPercent - 100) < 0.01 ? 'bi-check-circle-fill text-success' :
+                                                ($totalAllocationPercent > 100 ? 'bi-exclamation-triangle-fill text-warning' :
+                                                        'bi-info-circle-fill text-info')
+                                        ?> fs-4"></i>
+                                    </div>
+                                </div>
+
+                                <!-- Status da Alocação -->
+                                <div class="mt-3">
+                                    <?php if (abs($totalAllocationPercent - 100) < 0.01): ?>
+                                        <div class="alert alert-success border-0 bg-opacity-10 py-2 small mb-0">
+                                            <i class="bi bi-check-lg me-1"></i>
+                                            <strong>Perfeito!</strong> Alocação equilibrada
+                                        </div>
+                                    <?php elseif ($totalAllocationPercent > 100): ?>
+                                        <div class="alert alert-warning border-0 bg-opacity-10 py-2 small mb-0">
+                                            <i class="bi bi-exclamation-triangle me-1"></i>
+                                            <strong>Sobrando:</strong> <?= number_format($totalAllocationPercent - 100, 1) ?>%
+                                            <small class="d-block mt-1">Ajuste as alocações das ações existentes</small>
+                                        </div>
+                                    <?php else: ?>
+                                        <div class="alert alert-info border-0 bg-opacity-10 py-2 small mb-0">
+                                            <i class="bi bi-info-circle me-1"></i>
+                                            <strong>Faltando:</strong> <?= number_format(100 - $totalAllocationPercent, 1) ?>%
+                                            <small class="d-block mt-1">Adicione mais ações para completar</small>
+                                        </div>
+                                    <?php endif; ?>
+                                </div>
+
+                                <!-- Barra de Progresso Visual -->
+                                <div class="mt-3">
+                                    <div class="d-flex justify-content-between small text-muted mb-1">
+                                        <span>0%</span>
+                                        <span>Meta: 100%</span>
+                                        <span><?= number_format($totalAllocationPercent, 0) ?>%</span>
+                                    </div>
+                                    <div class="progress" style="height: 8px;">
+                                        <div class="progress-bar
+                                        <?=
+                                        abs($totalAllocationPercent - 100) < 0.01 ? 'bg-success progress-bar-striped' :
+                                                ($totalAllocationPercent > 100 ? 'bg-warning' : 'bg-info')
+                                        ?>"
+                                             style="width: <?= min(100, $totalAllocationPercent) ?>%">
+                                        </div>
+                                        <?php if ($totalAllocationPercent > 100): ?>
+                                            <div class="progress-bar bg-danger"
+                                                 style="width: <?= min(100, $totalAllocationPercent - 100) ?>%">
+                                            </div>
+                                        <?php endif; ?>
+                                    </div>
+                                    <div class="d-flex justify-content-between mt-1">
+                                        <small class="text-muted">
+                                            <?php if ($totalAllocationPercent < 100): ?>
+                                                <i class="bi bi-arrow-down-circle text-info me-1"></i>
+                                                <?= number_format(100 - $totalAllocationPercent, 1) ?>% disponível
+                                            <?php elseif ($totalAllocationPercent > 100): ?>
+                                                <i class="bi bi-arrow-up-circle text-warning me-1"></i>
+                                                <?= number_format($totalAllocationPercent - 100, 1) ?>% excedente
+                                            <?php else: ?>
+                                                <i class="bi bi-check-circle text-success me-1"></i>
+                                                Alocação ideal
+                                            <?php endif; ?>
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                <?php endif; ?>
             </div>
 
             <!-- Cards das Ações -->
@@ -117,7 +251,11 @@ ob_start();
                 </div>
             <?php else: ?>
                 <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
-                    <?php foreach ($stocks as $stock):
+                    <?php
+                    usort($stocks, function($a, $b) {
+                        return strcmp($a['ticker'], $b['ticker']);
+                    });
+                    foreach ($stocks as $stock):
                         $currentValue = $stock['quantity'] * $stock['last_price'];
                         $profitLoss = $currentValue - $stock['total_invested'];
                         $profitLossPercent = $stock['total_invested'] > 0 ? ($profitLoss / $stock['total_invested'] * 100) : 0;
@@ -136,6 +274,24 @@ ob_start();
                                                     <small class="text-muted">Ação</small>
                                                 </div>
                                             </div>
+
+                                            <!-- Indicador de Alocação na Ação -->
+                                            <?php
+                                            $actualAllocation = $summary['current_value'] > 0 ?
+                                                    ($currentValue / $summary['current_value']) * 100 : 0;
+                                            ?>
+                                            <small class="d-flex align-items-center mt-2">
+                                                <span class="badge
+                                                    <?=
+                                                abs($stock['target_allocation'] * 100 - $actualAllocation) < 1 ? 'bg-success' : 'bg-light text-dark'
+                                                ?>
+                                                    rounded-pill me-2">
+                                                    <?= number_format($stock['target_allocation'] * 100, 1) ?>%
+                                                </span>
+                                                <span class="text-muted small">
+                                                    Real: <?= number_format($actualAllocation, 1) ?>%
+                                                </span>
+                                            </small>
                                         </div>
 
                                         <div class="dropdown">

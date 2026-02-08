@@ -187,6 +187,54 @@
     align-items: center;
 }
 
+/* app/css/wallet_stocks.css */
+.allocation-perfect {
+    border-left: 4px solid #198754 !important;
+    animation: pulse-green 2s infinite;
+}
+
+.allocation-under {
+    border-left: 4px solid #0dcaf0 !important;
+    animation: pulse-blue 2s infinite;
+}
+
+.allocation-over {
+    border-left: 4px solid #ffc107 !important;
+    animation: pulse-yellow 2s infinite;
+}
+
+@keyframes pulse-green {
+    0% { box-shadow: 0 0 0 0 rgba(25, 135, 84, 0.4); }
+    70% { box-shadow: 0 0 0 10px rgba(25, 135, 84, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(25, 135, 84, 0); }
+}
+
+@keyframes pulse-blue {
+    0% { box-shadow: 0 0 0 0 rgba(13, 202, 240, 0.4); }
+    70% { box-shadow: 0 0 0 10px rgba(13, 202, 240, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(13, 202, 240, 0); }
+}
+
+@keyframes pulse-yellow {
+    0% { box-shadow: 0 0 0 0 rgba(255, 193, 7, 0.4); }
+    70% { box-shadow: 0 0 0 10px rgba(255, 193, 7, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(255, 193, 7, 0); }
+}
+
+.progress-bar-striped {
+    background-image: linear-gradient(
+            45deg,
+            rgba(255, 255, 255, 0.15) 25%,
+            transparent 25%,
+            transparent 50%,
+            rgba(255, 255, 255, 0.15) 50%,
+            rgba(255, 255, 255, 0.15) 75%,
+            transparent 75%,
+            transparent
+    );
+    background-size: 1rem 1rem;
+}
+
 /* Estilos para responsividade */
 @media (max-width: 768px) {
     .stocks-grid {
