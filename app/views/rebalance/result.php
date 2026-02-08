@@ -284,6 +284,7 @@ ob_start();
                                       onsubmit="return confirm('Deseja realmente aplicar este rebalanceamento? Esta ação atualizará sua carteira.')">
                                     <input type="hidden" name="csrf_token" value="<?= Session::getCsrfToken(); ?>">
                                     <input type="hidden" name="instructions" value="<?= htmlspecialchars(json_encode($result['instructions'])) ?>">
+                                    <input type="hidden" name="target_composition" value="<?= htmlspecialchars(json_encode($result['target_composition'])) ?>">
 
                                     <div class="d-grid gap-2">
                                         <button type="submit" class="btn btn-success btn-lg rounded-pill">

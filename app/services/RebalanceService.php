@@ -622,7 +622,10 @@ class RebalanceService {
     /**
      * Aplicar rebalanceamento (executar transações)
      */
-    public function executeRebalance($walletId, $instructions, $userId) {
+    /**
+     * Aplicar rebalanceamento (executar transações)
+     */
+    public function executeRebalance($walletId, $instructions, $targetComposition, $userId) {
         try {
             // Iniciar transação no banco de dados
             $this->db->beginTransaction();
@@ -639,11 +642,17 @@ class RebalanceService {
                 }
             }
 
-            // 3. Atualizar composição da carteira
+            // 3. Atualizar targets (percentuais de alocação) de todas as ações
+            $this->updateTargetAllocations($walletId, $targetComposition);
+
+            // 4. Atualizar composição da carteira
             $this->updateWalletComposition($walletId);
 
-            // 4. Registrar log do rebalanceamento
+            // 5. Registrar log do rebalanceamento
             $logId = $this->logRebalancement($walletId, $userId, $instructions);
+
+            // 6. Validar soma dos targets
+            $this->validateTargetSum($walletId);
 
             // Commit da transação
             $this->db->commit();
@@ -669,6 +678,64 @@ class RebalanceService {
                 'success' => false,
                 'message' => 'Erro ao aplicar rebalanceamento: ' . $e->getMessage()
             ];
+        }
+    }
+
+    /**
+     * Verificar se a soma dos targets está próxima de 100%
+     */
+    private function validateTargetSum($walletId) {
+        $sql = "SELECT SUM(target_allocation) as total FROM wallet_stocks WHERE wallet_id = ?";
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([$walletId]);
+        $result = $stmt->fetch();
+
+        $total = $result['total'] ?? 0;
+        $totalPercent = $total * 100;
+
+        if (abs($totalPercent - 100) > 1) { // Tolerância de 1%
+            error_log("Aviso: Soma dos targets da carteira $walletId está em " . number_format($totalPercent, 2) . "%");
+        }
+
+        return $totalPercent;
+    }
+
+    /**
+     * Atualizar targets (percentuais de alocação) de todas as ações
+     */
+    private function updateTargetAllocations($walletId, $targetComposition) {
+        if (empty($targetComposition)) {
+            error_log("Aviso: targetComposition vazio para carteira $walletId");
+            return;
+        }
+
+        foreach ($targetComposition as $ticker => $data) {
+            if (!isset($data['target_percent'])) {
+                error_log("Aviso: target_percent não definido para $ticker");
+                continue;
+            }
+
+            // Converter percentual para decimal (25% → 0.25)
+            $targetAllocation = $data['target_percent'] / 100;
+
+            // Verificar se a ação existe na carteira
+            $sql = "SELECT id FROM wallet_stocks WHERE wallet_id = ? AND ticker = ?";
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute([$walletId, $ticker]);
+            $stock = $stmt->fetch();
+
+            if ($stock) {
+                // Atualizar target_allocation
+                $sql = "UPDATE wallet_stocks 
+                    SET target_allocation = ?, updated_at = NOW() 
+                    WHERE id = ?";
+                $stmt = $this->db->prepare($sql);
+                $stmt->execute([$targetAllocation, $stock['id']]);
+
+                error_log("Atualizado target_allocation de $ticker para $targetAllocation (".$data['target_percent']."%)");
+            } else {
+                error_log("Aviso: Ação $ticker não encontrada na carteira $walletId para atualizar target_allocation");
+            }
         }
     }
 
@@ -702,6 +769,9 @@ class RebalanceService {
     /**
      * Processar compra de ações
      */
+    /**
+     * Processar compra de ações
+     */
     private function processPurchase($buyInstruction, $walletId, $userId) {
         $quantity = $buyInstruction['quantity_executed'] ?? $buyInstruction['quantity_needed'] ?? 0;
 
@@ -710,16 +780,24 @@ class RebalanceService {
         }
 
         // Verificar se a ação já existe na carteira
-        $sql = "SELECT id, quantity, average_cost_per_share FROM wallet_stocks 
+        $sql = "SELECT id, quantity, average_cost_per_share, target_allocation 
+            FROM wallet_stocks 
             WHERE wallet_id = ? AND ticker = ?";
         $stmt = $this->db->prepare($sql);
         $stmt->execute([$walletId, $buyInstruction['ticker']]);
         $existingStock = $stmt->fetch();
 
         if ($existingStock) {
-            // Atualizar ação existente
-            $newQuantity = $existingStock['quantity'] + $quantity;
-            $newTotalCost = $newQuantity * $buyInstruction['price'];
+            // Atualizar ação existente - recalcular preço médio
+            $oldQuantity = $existingStock['quantity'];
+            $oldAverageCost = $existingStock['average_cost_per_share'];
+            $newQuantity = $quantity;
+            $newPrice = $buyInstruction['price'];
+
+            // Calcular novo preço médio ponderado
+            $totalCost = ($oldQuantity * $oldAverageCost) + ($newQuantity * $newPrice);
+            $totalQuantity = $oldQuantity + $newQuantity;
+            $newAverageCost = $totalCost / $totalQuantity;
 
             $sql = "UPDATE wallet_stocks 
                 SET quantity = ?,
@@ -730,9 +808,9 @@ class RebalanceService {
                 WHERE id = ?";
             $stmt = $this->db->prepare($sql);
             $stmt->execute([
-                $newQuantity,
-                $buyInstruction['price'], // Atualiza o preço médio para o preço atual
-                $newTotalCost,
+                $totalQuantity,
+                $newAverageCost,
+                $totalQuantity * $newAverageCost,
                 $buyInstruction['price'],
                 $existingStock['id']
             ]);
@@ -740,6 +818,7 @@ class RebalanceService {
             // Inserir nova ação
             $totalCost = $quantity * $buyInstruction['price'];
 
+            // NOTA: target_allocation será atualizado posteriormente no updateTargetAllocations
             $sql = "INSERT INTO wallet_stocks 
                 (wallet_id, ticker, quantity, average_cost_per_share, 
                  total_cost, last_market_price, target_allocation) 
@@ -752,7 +831,7 @@ class RebalanceService {
                 $buyInstruction['price'],
                 $totalCost,
                 $buyInstruction['price'],
-                0.0 // Será atualizado posteriormente
+                0.0 // Será atualizado posteriormente no updateTargetAllocations
             ]);
         }
     }

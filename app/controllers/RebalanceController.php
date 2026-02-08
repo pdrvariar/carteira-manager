@@ -112,7 +112,6 @@ class RebalanceController {
         exit;
     }
 
-
     public function execute() {
         Auth::checkAuthentication();
         $walletId = $this->params['wallet_id'] ?? null;
@@ -125,9 +124,10 @@ class RebalanceController {
 
             // Decodificar instruções do formulário
             $instructions = json_decode($_POST['instructions'] ?? '[]', true);
+            $targetComposition = json_decode($_POST['target_composition'] ?? '[]', true);
 
-            if (empty($instructions)) {
-                Session::setFlash('error', 'Instruções de rebalanceamento inválidas.');
+            if (empty($instructions) || empty($targetComposition)) {
+                Session::setFlash('error', 'Dados de rebalanceamento inválidos.');
                 header('Location: /index.php?url=' . obfuscateUrl('rebalance/index/' . $walletId));
                 exit;
             }
@@ -136,6 +136,7 @@ class RebalanceController {
             $result = $this->rebalanceService->executeRebalance(
                 $walletId,
                 $instructions,
+                $targetComposition,
                 $_SESSION['user_id']
             );
 
@@ -153,4 +154,5 @@ class RebalanceController {
         header('Location: /index.php?url=' . obfuscateUrl('rebalance/index/' . $walletId));
         exit;
     }
+
 }
