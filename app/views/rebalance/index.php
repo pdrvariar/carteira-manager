@@ -58,6 +58,52 @@ $additional_css = '
             border-color: #0d6efd;
             transform: translateY(-2px);
         }
+        .drop-zone {
+            border: 3px dashed #dee2e6;
+            border-radius: 12px;
+            padding: 60px 20px;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            background-color: #f8f9fa;
+        }
+        .drop-zone:hover, .drop-zone.dragover {
+            border-color: #0d6efd;
+            background-color: rgba(13, 110, 253, 0.05);
+        }
+        .drop-zone i {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            color: #6c757d;
+        }
+        .drop-zone.dragover i {
+            color: #0d6efd;
+        }
+        .file-preview {
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 20px;
+        }
+        .file-item {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            background: white;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            border: 1px solid #e9ecef;
+        }
+        .csv-format {
+            font-family: "Courier New", monospace;
+            font-size: 0.85rem;
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+        }
+        .csv-format code {
+            color: #d63384;
+        }
     </style>
 ';
 ob_start();
@@ -148,7 +194,6 @@ ob_start();
                                         <div class="row g-3">
                                             <?php foreach ($currentStocks as $stock):
                                                 $allocationPercent = $stock['target_allocation'] * 100;
-                                                $actualAllocation = 0; // Seria calculado com o valor total
                                                 ?>
                                                 <div class="col-md-6">
                                                     <div class="card border-0 shadow-sm rounded-3 composition-item h-100">
@@ -233,7 +278,7 @@ ob_start();
                                                     <div>
                                                         <small class="fw-bold">Adicione as Ações</small>
                                                         <p class="small text-muted mb-0">
-                                                            Informe os tickers e percentuais de alocação
+                                                            Informe os tickers e percentuais manualmente ou importe um arquivo CSV
                                                         </p>
                                                     </div>
                                                 </div>
@@ -257,7 +302,7 @@ ob_start();
                                                 <li>As alocações devem somar 100%</li>
                                                 <li>Você pode aumentar ou reduzir o valor total</li>
                                                 <li>Apenas informe tickers de lote cheio (ex: PETR4)</li>
-                                                <li>O sistema calculará automaticamente a divisão entre lotes cheios e fracionários</li>
+                                                <li>Use o formato CSV para importar várias ações de uma vez</li>
                                                 <li>Taxas de corretagem não estão incluídas no cálculo</li>
                                             </ul>
                                         </div>
@@ -356,6 +401,57 @@ ob_start();
                                             </div>
                                         </div>
 
+                                        <!-- Área de Upload de CSV -->
+                                        <div class="card border-0 shadow-sm rounded-4 mb-4">
+                                            <div class="card-header bg-white">
+                                                <h6 class="fw-bold mb-0">
+                                                    <i class="bi bi-upload me-2 text-success"></i>
+                                                    Importar Composição por Arquivo CSV
+                                                </h6>
+                                            </div>
+                                            <div class="card-body">
+                                                <div class="drop-zone" id="dropZone">
+                                                    <i class="bi bi-cloud-arrow-up"></i>
+                                                    <h5 class="mb-2">Arraste e solte seu arquivo CSV aqui</h5>
+                                                    <p class="text-muted small mb-3">ou clique para selecionar</p>
+                                                    <input type="file" id="csvFile" accept=".csv" style="display: none;">
+                                                    <button type="button" class="btn btn-outline-primary rounded-pill px-4"
+                                                            onclick="document.getElementById('csvFile').click()">
+                                                        <i class="bi bi-folder2-open me-2"></i> Selecionar Arquivo
+                                                    </button>
+
+                                                    <div class="csv-format mt-4">
+                                                        <h6 class="fw-bold mb-2"><i class="bi bi-filetype-csv me-2"></i>Formato do CSV:</h6>
+                                                        <p class="small mb-2">Cada linha deve conter: <code>TICKER;PERCENTUAL</code></p>
+                                                        <pre class="mb-0 small">PETR4;25.0;
+VALE3;27.5;
+ITUB4;2.5;
+WEGE3;35.0;</pre>
+                                                        <p class="small mt-2 mb-0 text-muted">Separador: ponto e vírgula (;)</p>
+                                                    </div>
+                                                </div>
+
+                                                <div id="filePreview" class="file-preview" style="display: none;">
+                                                    <div class="alert alert-success d-flex align-items-center">
+                                                        <i class="bi bi-check-circle-fill me-3 fs-4"></i>
+                                                        <div>
+                                                            <h6 class="fw-bold mb-1">Arquivo carregado com sucesso!</h6>
+                                                            <p class="mb-0" id="fileInfo"></p>
+                                                        </div>
+                                                        <button type="button" class="btn-close ms-auto"
+                                                                onclick="clearCSV()"></button>
+                                                    </div>
+                                                    <div id="csvPreview" class="mt-3"></div>
+                                                    <div class="text-center mt-3">
+                                                        <button type="button" class="btn btn-success rounded-pill px-4"
+                                                                onclick="processCSV()">
+                                                            <i class="bi bi-check-lg me-2"></i> Aplicar Composição do CSV
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
                                         <div class="card border-0 shadow-sm rounded-4 mb-4">
                                             <div class="card-header bg-white">
                                                 <div class="d-flex justify-content-between align-items-center">
@@ -363,10 +459,16 @@ ob_start();
                                                         <h6 class="mb-0 fw-bold">Ações e Percentuais</h6>
                                                         <small class="text-muted">Adicione todas as ações da nova composição (informe apenas tickers de lote cheio)</small>
                                                     </div>
-                                                    <button type="button" class="btn btn-sm btn-outline-primary rounded-pill"
-                                                            onclick="addNewStock()">
-                                                        <i class="bi bi-plus-lg me-1"></i> Nova Ação
-                                                    </button>
+                                                    <div>
+                                                        <button type="button" class="btn btn-sm btn-outline-primary rounded-pill me-2"
+                                                                onclick="addNewStock()">
+                                                            <i class="bi bi-plus-lg me-1"></i> Nova Ação
+                                                        </button>
+                                                        <button type="button" class="btn btn-sm btn-outline-danger rounded-pill"
+                                                                onclick="clearAllStocks()">
+                                                            <i class="bi bi-trash me-1"></i> Limpar Tudo
+                                                        </button>
+                                                    </div>
                                                 </div>
                                             </div>
                                             <div class="card-body">
@@ -378,7 +480,7 @@ ob_start();
                                                             <input type="text"
                                                                    class="form-control ticker-input"
                                                                    name="tickers[]"
-                                                                   placeholder="Ex: PETR4, ITUB4"
+                                                                   placeholder="Ex: PETR4, VALE3"
                                                                    maxlength="10"
                                                                    required>
                                                         </div>
@@ -551,7 +653,228 @@ ob_start();
             document.querySelectorAll('.allocation-input').forEach(input => {
                 input.addEventListener('input', updateTotalAllocation);
             });
+
+            // Configurar drag and drop
+            setupDragAndDrop();
+
+            // Configurar input de arquivo
+            document.getElementById('csvFile').addEventListener('change', handleFileSelect);
         });
+
+        function setupDragAndDrop() {
+            const dropZone = document.getElementById('dropZone');
+            const fileInput = document.getElementById('csvFile');
+
+            // Prevenir comportamentos padrão
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                dropZone.addEventListener(eventName, preventDefaults, false);
+                document.body.addEventListener(eventName, preventDefaults, false);
+            });
+
+            // Destacar drop zone
+            ['dragenter', 'dragover'].forEach(eventName => {
+                dropZone.addEventListener(eventName, highlight, false);
+            });
+
+            ['dragleave', 'drop'].forEach(eventName => {
+                dropZone.addEventListener(eventName, unhighlight, false);
+            });
+
+            // Lidar com drop
+            dropZone.addEventListener('drop', handleDrop, false);
+
+            function preventDefaults(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+
+            function highlight() {
+                dropZone.classList.add('dragover');
+            }
+
+            function unhighlight() {
+                dropZone.classList.remove('dragover');
+            }
+
+            function handleDrop(e) {
+                const dt = e.dataTransfer;
+                const files = dt.files;
+
+                if (files.length) {
+                    handleFiles(files);
+                }
+            }
+        }
+
+        function handleFileSelect(e) {
+            const files = e.target.files;
+            if (files.length) {
+                handleFiles(files);
+            }
+        }
+
+        let csvData = null;
+
+        function handleFiles(files) {
+            const file = files[0];
+
+            // Verificar se é CSV
+            if (!file.name.toLowerCase().endsWith('.csv')) {
+                alert('Por favor, selecione um arquivo CSV.');
+                return;
+            }
+
+            // Verificar tamanho (máximo 1MB)
+            if (file.size > 1024 * 1024) {
+                alert('Arquivo muito grande. Máximo 1MB.');
+                return;
+            }
+
+            const reader = new FileReader();
+
+            reader.onload = function(e) {
+                try {
+                    const content = e.target.result;
+                    csvData = parseCSV(content);
+
+                    // Mostrar preview
+                    showCSVPreview(file, csvData);
+                } catch (error) {
+                    alert('Erro ao ler o arquivo CSV: ' + error.message);
+                }
+            };
+
+            reader.readAsText(file, 'UTF-8');
+        }
+
+        function parseCSV(content) {
+            const lines = content.split('\n');
+            const data = [];
+            let totalPercent = 0;
+
+            for (let i = 0; i < lines.length; i++) {
+                const line = lines[i].trim();
+
+                // Ignorar linhas vazias
+                if (!line) continue;
+
+                // Separar por ponto e vírgula
+                const parts = line.split(';');
+
+                if (parts.length < 2) {
+                    throw new Error(`Linha ${i + 1}: Formato inválido. Use "TICKER;PERCENTUAL"`);
+                }
+
+                const ticker = parts[0].trim().toUpperCase();
+                const percent = parseFloat(parts[1].replace(',', '.'));
+
+                // Validar ticker
+                if (!ticker.match(/^[A-Z]{4}\d{1,2}(F)?$/)) {
+                    throw new Error(`Linha ${i + 1}: Ticker "${ticker}" inválido. Use formato como PETR4, VALE3, etc.`);
+                }
+
+                // Validar percentual
+                if (isNaN(percent) || percent <= 0 || percent > 100) {
+                    throw new Error(`Linha ${i + 1}: Percentual "${parts[1]}" inválido. Deve ser entre 0.01 e 100.`);
+                }
+
+                data.push({ ticker, percent });
+                totalPercent += percent;
+            }
+
+            if (data.length === 0) {
+                throw new Error('Arquivo CSV vazio ou sem dados válidos.');
+            }
+
+            // Verificar se soma está próxima de 100% (com tolerância)
+            if (Math.abs(totalPercent - 100) > 0.1) {
+                console.warn(`Atenção: Soma dos percentuais é ${totalPercent.toFixed(2)}%, não 100%.`);
+            }
+
+            return data;
+        }
+
+        function showCSVPreview(file, data) {
+            const fileInfo = document.getElementById('fileInfo');
+            const csvPreview = document.getElementById('csvPreview');
+            const filePreview = document.getElementById('filePreview');
+
+            // Atualizar informações do arquivo
+            fileInfo.textContent = `${file.name} (${(file.size / 1024).toFixed(2)} KB) - ${data.length} ação(ões) encontrada(s)`;
+
+            // Criar preview da tabela
+            let html = '<div class="table-responsive"><table class="table table-sm table-hover">';
+            html += '<thead><tr><th>Ticker</th><th class="text-end">% Alocação</th></tr></thead><tbody>';
+
+            let totalPercent = 0;
+            data.forEach(item => {
+                html += `<tr><td><span class="badge bg-primary">${item.ticker}</span></td><td class="text-end">${item.percent.toFixed(2)}%</td></tr>`;
+                totalPercent += item.percent;
+            });
+
+            html += '</tbody><tfoot class="table-light">';
+            html += `<tr><th>TOTAL</th><th class="text-end fw-bold ${Math.abs(totalPercent - 100) < 0.1 ? 'text-success' : 'text-warning'}">${totalPercent.toFixed(2)}%</th></tr>`;
+            html += '</tfoot></table></div>';
+
+            csvPreview.innerHTML = html;
+            filePreview.style.display = 'block';
+
+            // Rolar até o preview
+            filePreview.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        function processCSV() {
+            if (!csvData || csvData.length === 0) {
+                alert('Nenhum dado CSV para processar.');
+                return;
+            }
+
+            // Limpar todas as ações atuais
+            clearAllStocks();
+
+            // Adicionar cada ação do CSV
+            csvData.forEach(item => {
+                addNewStock(item.ticker, item.percent);
+            });
+
+            // Atualizar total
+            updateTotalAllocation();
+
+            // Fechar preview
+            document.getElementById('filePreview').style.display = 'none';
+
+            // Mostrar mensagem de sucesso
+            alert(`${csvData.length} ações importadas com sucesso!`);
+        }
+
+        function clearCSV() {
+            csvData = null;
+            document.getElementById('filePreview').style.display = 'none';
+            document.getElementById('csvFile').value = '';
+        }
+
+        function clearAllStocks() {
+            const container = document.getElementById('compositionContainer');
+            const rows = container.querySelectorAll('.composition-row');
+
+            if (rows.length > 1) {
+                if (!confirm('Tem certeza que deseja remover todas as ações?')) {
+                    return;
+                }
+
+                // Manter apenas a primeira linha e limpar seus valores
+                for (let i = rows.length - 1; i > 0; i--) {
+                    rows[i].remove();
+                }
+
+                // Limpar primeira linha
+                const firstRow = rows[0];
+                firstRow.querySelector('.ticker-input').value = '';
+                firstRow.querySelector('.allocation-input').value = '';
+
+                updateTotalAllocation();
+            }
+        }
 
         function nextStep() {
             const step2Tab = document.querySelector('#step2-tab');
@@ -577,9 +900,9 @@ ob_start();
             const container = document.getElementById('compositionContainer');
             const rowCount = container.querySelectorAll('.composition-row').length;
 
-            // Limitar a 15 ações
-            if (rowCount >= 15) {
-                alert('Máximo de 15 ações permitidas para uma carteira diversificada.');
+            // Limitar a 20 ações
+            if (rowCount >= 20) {
+                alert('Máximo de 20 ações permitidas para uma carteira diversificada.');
                 return;
             }
 
@@ -713,7 +1036,7 @@ ob_start();
             value = parseFloat(value) || 0;
 
             // Atualizar campo com formatação
-            // newTotalInput.value = value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            //newTotalInput.value = value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
             // Atualizar display do novo total
             newTotalDisplay.textContent = 'R$ ' + value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
