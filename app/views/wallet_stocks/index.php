@@ -69,13 +69,13 @@ ob_start();
 
             <!-- Cards de Resumo -->
             <div class="row mb-4">
-                <div class="col-xl-3 col-md-6 mb-4">
-                    <div class="card border-0 shadow-sm rounded-4 metric-card">
+                <div class="col-xl col-md-6 mb-4">
+                    <div class="card border-0 shadow-sm rounded-4 metric-card h-100">
                         <div class="card-body p-4">
                             <div class="d-flex justify-content-between align-items-center">
                                 <div>
                                     <h6 class="text-muted mb-2">Total Investido</h6>
-                                    <h3 class="fw-bold text-primary">R$ <?= number_format($summary['total_invested'] ?? 0, 2, ',', '.') ?></h3>
+                                    <h5 class="fw-bold text-primary">R$ <?= number_format($summary['total_invested'] ?? 0, 2, ',', '.') ?></h5>
                                 </div>
                                 <div class="bg-primary bg-opacity-10 rounded-circle p-3">
                                     <i class="bi bi-cash-coin text-primary fs-4"></i>
@@ -85,13 +85,13 @@ ob_start();
                     </div>
                 </div>
 
-                <div class="col-xl-3 col-md-6 mb-4">
-                    <div class="card border-0 shadow-sm rounded-4 metric-card">
+                <div class="col-xl col-md-6 mb-4">
+                    <div class="card border-0 shadow-sm rounded-4 metric-card h-100">
                         <div class="card-body p-4">
                             <div class="d-flex justify-content-between align-items-center">
                                 <div>
                                     <h6 class="text-muted mb-2">Valor Atual</h6>
-                                    <h3 class="fw-bold text-success">R$ <?= number_format($summary['current_value'] ?? 0, 2, ',', '.') ?></h3>
+                                    <h5 class="fw-bold text-success">R$ <?= number_format($summary['current_value'] ?? 0, 2, ',', '.') ?></h5>
                                 </div>
                                 <div class="bg-success bg-opacity-10 rounded-circle p-3">
                                     <i class="bi bi-graph-up text-success fs-4"></i>
@@ -101,15 +101,23 @@ ob_start();
                     </div>
                 </div>
 
-                <div class="col-xl-3 col-md-6 mb-4">
-                    <div class="card border-0 shadow-sm rounded-4 metric-card">
+                <div class="col-xl col-md-6 mb-4">
+                    <div class="card border-0 shadow-sm rounded-4 metric-card h-100">
                         <div class="card-body p-4">
                             <div class="d-flex justify-content-between align-items-center">
                                 <div>
                                     <h6 class="text-muted mb-2">Lucro/Prejuízo</h6>
-                                    <h3 class="fw-bold <?= ($summary['total_pl'] ?? 0) >= 0 ? 'text-success' : 'text-danger' ?>">
+                                    <h5 class="fw-bold <?= ($summary['total_pl'] ?? 0) >= 0 ? 'text-success' : 'text-danger' ?>">
                                         R$ <?= number_format($summary['total_pl'] ?? 0, 2, ',', '.') ?>
-                                    </h3>
+                                    </h5>
+                                    <?php
+                                    $totalInvested = $summary['total_invested'] ?? 0;
+                                    $totalPL = $summary['total_pl'] ?? 0;
+                                    $totalPLPercent = $totalInvested > 0 ? ($totalPL / $totalInvested * 100) : 0;
+                                    ?>
+                                    <small class="text-muted">
+                                        <?= ($totalPLPercent >= 0 ? '+' : '') . number_format($totalPLPercent, 2, ',', '.') ?>%
+                                    </small>
                                 </div>
                                 <div class="<?= ($summary['total_pl'] ?? 0) >= 0 ? 'bg-success' : 'bg-danger' ?> bg-opacity-10 rounded-circle p-3">
                                     <i class="bi <?= ($summary['total_pl'] ?? 0) >= 0 ? 'bi-arrow-up-right text-success' : 'bi-arrow-down-right text-danger' ?> fs-4"></i>
@@ -119,13 +127,13 @@ ob_start();
                     </div>
                 </div>
 
-                <div class="col-xl-3 col-md-6 mb-4">
-                    <div class="card border-0 shadow-sm rounded-4 metric-card">
+                <div class="col-xl col-md-6 mb-4">
+                    <div class="card border-0 shadow-sm rounded-4 metric-card h-100">
                         <div class="card-body p-4">
                             <div class="d-flex justify-content-between align-items-center">
                                 <div>
                                     <h6 class="text-muted mb-2">Total de Ações</h6>
-                                    <h3 class="fw-bold text-info"><?= $summary['total_stocks'] ?? 0 ?></h3>
+                                    <h5 class="fw-bold text-info"><?= $summary['total_stocks'] ?? 0 ?></h5>
                                     <small class="text-muted"><?= $summary['total_quantity'] ?? 0 ?> cotas</small>
                                 </div>
                                 <div class="bg-info bg-opacity-10 rounded-circle p-3">
@@ -138,8 +146,8 @@ ob_start();
 
                 <!-- Card de Alocação Total -->
                 <?php if (isset($totalAllocationPercent)): ?>
-                    <div class="col-xl-3 col-md-6 mb-4">
-                        <div class="card border-0 shadow-sm rounded-4 metric-card
+                    <div class="col-xl col-md-6 mb-4">
+                        <div class="card border-0 shadow-sm rounded-4 metric-card h-100
                         <?=
                         abs($totalAllocationPercent - 100) < 0.01 ? 'allocation-perfect border-success' :
                                 ($totalAllocationPercent > 100 ? 'allocation-over border-warning' : 'allocation-under border-info')
@@ -148,13 +156,13 @@ ob_start();
                                 <div class="d-flex justify-content-between align-items-center">
                                     <div>
                                         <h6 class="text-muted mb-2">Alocação Total</h6>
-                                        <h3 class="fw-bold
+                                        <h5 class="fw-bold
                                         <?=
                                         abs($totalAllocationPercent - 100) < 0.01 ? 'text-success' :
                                                 ($totalAllocationPercent > 100 ? 'text-warning' : 'text-info')
                                         ?>">
                                             <?= number_format($totalAllocationPercent, 1) ?>%
-                                        </h3>
+                                        </h5>
                                         <small class="text-muted">Meta: 100%</small>
                                     </div>
                                     <div class="
@@ -168,65 +176,6 @@ ob_start();
                                                 ($totalAllocationPercent > 100 ? 'bi-exclamation-triangle-fill text-warning' :
                                                         'bi-info-circle-fill text-info')
                                         ?> fs-4"></i>
-                                    </div>
-                                </div>
-
-                                <!-- Status da Alocação -->
-                                <div class="mt-3">
-                                    <?php if (abs($totalAllocationPercent - 100) < 0.01): ?>
-                                        <div class="alert alert-success border-0 bg-opacity-10 py-2 small mb-0">
-                                            <i class="bi bi-check-lg me-1"></i>
-                                            <strong>Perfeito!</strong> Alocação equilibrada
-                                        </div>
-                                    <?php elseif ($totalAllocationPercent > 100): ?>
-                                        <div class="alert alert-warning border-0 bg-opacity-10 py-2 small mb-0">
-                                            <i class="bi bi-exclamation-triangle me-1"></i>
-                                            <strong>Sobrando:</strong> <?= number_format($totalAllocationPercent - 100, 1) ?>%
-                                            <small class="d-block mt-1">Ajuste as alocações das ações existentes</small>
-                                        </div>
-                                    <?php else: ?>
-                                        <div class="alert alert-info border-0 bg-opacity-10 py-2 small mb-0">
-                                            <i class="bi bi-info-circle me-1"></i>
-                                            <strong>Faltando:</strong> <?= number_format(100 - $totalAllocationPercent, 1) ?>%
-                                            <small class="d-block mt-1">Adicione mais ações para completar</small>
-                                        </div>
-                                    <?php endif; ?>
-                                </div>
-
-                                <!-- Barra de Progresso Visual -->
-                                <div class="mt-3">
-                                    <div class="d-flex justify-content-between small text-muted mb-1">
-                                        <span>0%</span>
-                                        <span>Meta: 100%</span>
-                                        <span><?= number_format($totalAllocationPercent, 0) ?>%</span>
-                                    </div>
-                                    <div class="progress" style="height: 8px;">
-                                        <div class="progress-bar
-                                        <?=
-                                        abs($totalAllocationPercent - 100) < 0.01 ? 'bg-success progress-bar-striped' :
-                                                ($totalAllocationPercent > 100 ? 'bg-warning' : 'bg-info')
-                                        ?>"
-                                             style="width: <?= min(100, $totalAllocationPercent) ?>%">
-                                        </div>
-                                        <?php if ($totalAllocationPercent > 100): ?>
-                                            <div class="progress-bar bg-danger"
-                                                 style="width: <?= min(100, $totalAllocationPercent - 100) ?>%">
-                                            </div>
-                                        <?php endif; ?>
-                                    </div>
-                                    <div class="d-flex justify-content-between mt-1">
-                                        <small class="text-muted">
-                                            <?php if ($totalAllocationPercent < 100): ?>
-                                                <i class="bi bi-arrow-down-circle text-info me-1"></i>
-                                                <?= number_format(100 - $totalAllocationPercent, 1) ?>% disponível
-                                            <?php elseif ($totalAllocationPercent > 100): ?>
-                                                <i class="bi bi-arrow-up-circle text-warning me-1"></i>
-                                                <?= number_format($totalAllocationPercent - 100, 1) ?>% excedente
-                                            <?php else: ?>
-                                                <i class="bi bi-check-circle text-success me-1"></i>
-                                                Alocação ideal
-                                            <?php endif; ?>
-                                        </small>
                                     </div>
                                 </div>
                             </div>
