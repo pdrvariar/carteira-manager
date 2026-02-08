@@ -60,6 +60,12 @@ ob_start();
                        class="btn btn-outline-primary rounded-pill px-4">
                         <i class="bi bi-arrow-clockwise me-2"></i> Atualizar Preços
                     </a>
+
+                    <a href="/index.php?url=<?= obfuscateUrl('rebalance/index/' . $wallet['id']) ?>"
+                       class="btn btn-warning rounded-pill px-4">
+                        <i class="bi bi-arrow-left-right me-2"></i> Rebalancear
+                    </a>
+
                     <a href="/index.php?url=<?= obfuscateUrl('wallet_stocks/create/' . $wallet['id']) ?>"
                        class="btn btn-primary rounded-pill px-4">
                         <i class="bi bi-plus-lg me-2"></i> Nova Ação

@@ -74,6 +74,10 @@ function setupRoutes(Router $router) {
     $router->add('wallet_stocks/delete/{id:\d+}', ['controller' => 'wallet-stock', 'action' => 'delete']);
     $router->add('wallet_stocks/update_prices/{wallet_id:\d+}', ['controller' => 'wallet-stock', 'action' => 'updatePrices']);
 
+    $router->add('rebalance/index/{wallet_id:\d+}', ['controller' => 'rebalance', 'action' => 'index']);
+    $router->add('rebalance/calculate/{wallet_id:\d+}', ['controller' => 'rebalance', 'action' => 'calculate']);
+    $router->add('rebalance/execute/{wallet_id:\d+}', ['controller' => 'rebalance', 'action' => 'execute']);
+
     $router->add('project', ['controller' => 'project', 'action' => 'index']);
     $router->add('project/create', ['controller' => 'project', 'action' => 'create']);
     $router->add('project/view/{id:\d+}', ['controller' => 'project', 'action' => 'view']);

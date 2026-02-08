@@ -250,6 +250,116 @@
     }
 }
 
+/* Adicionar ao wallet_stocks.css */
+
+/* Estilos específicos para rebalanceamento */
+.rebalance-wizard {
+    background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+}
+
+.step-indicator {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+}
+
+.step-active {
+    background-color: #0d6efd;
+    color: white;
+}
+
+.step-inactive {
+    background-color: #e9ecef;
+    color: #6c757d;
+}
+
+.step-completed {
+    background-color: #198754;
+    color: white;
+}
+
+.ticker-chip {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-weight: 500;
+    font-size: 0.85rem;
+}
+
+.allocation-chip {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.progress-step {
+    position: relative;
+    flex: 1;
+}
+
+.progress-step:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    top: 15px;
+    left: 50%;
+    width: 100%;
+    height: 2px;
+    background-color: #e9ecef;
+    z-index: 1;
+}
+
+.step-content {
+    position: relative;
+    z-index: 2;
+}
+
+.transaction-details {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+}
+
+.transaction-details.show {
+    max-height: 500px;
+}
+
+.lot-badge {
+    font-size: 0.7rem;
+    padding: 1px 6px;
+    border-radius: 8px;
+}
+
+.lot-full {
+    background-color: rgba(13, 110, 253, 0.1);
+    color: #0d6efd;
+}
+
+.lot-fractional {
+    background-color: rgba(32, 201, 151, 0.1);
+    color: #20c997;
+}
+
+.price-change {
+    font-family: 'Courier New', monospace;
+    font-weight: bold;
+}
+
+.positive-change {
+    color: #198754;
+}
+
+.negative-change {
+    color: #dc3545;
+}
+
 /* Modo escuro (opcional) */
 @media (prefers-color-scheme: dark) {
     .stock-card {
