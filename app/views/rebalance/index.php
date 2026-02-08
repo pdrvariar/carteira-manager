@@ -12,6 +12,12 @@ foreach ($currentStocks as $stock) {
     $totalAllocation += $stock['target_allocation'] * 100;
 }
 
+// Calcular valor total atual da carteira
+$currentTotalValue = 0;
+foreach ($currentStocks as $stock) {
+    $currentTotalValue += $stock['total_cost'];
+}
+
 $title = 'Rebalancear Carteira: ' . htmlspecialchars($wallet['name']);
 $additional_css = '
     <link rel="stylesheet" href="/css/wallet_stocks.css">
@@ -44,6 +50,14 @@ $additional_css = '
         .action-buy { border-left-color: #198754 !important; }
         .action-keep { border-left-color: #6c757d !important; }
         .action-adjust { border-left-color: #ffc107 !important; }
+        .value-display-card {
+            border: 2px solid #e9ecef;
+            transition: all 0.3s ease;
+        }
+        .value-display-card:hover {
+            border-color: #0d6efd;
+            transform: translateY(-2px);
+        }
     </style>
 ';
 ob_start();
@@ -85,13 +99,6 @@ ob_start();
                                 Nova Composição
                             </button>
                         </li>
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link rounded-pill" id="step3-tab" data-bs-toggle="tab"
-                                    data-bs-target="#step3" type="button" role="tab">
-                                <span class="badge bg-secondary rounded-circle me-2">3</span>
-                                Revisar & Calcular
-                            </button>
-                        </li>
                     </ul>
                 </div>
 
@@ -113,6 +120,31 @@ ob_start();
                                             Esta carteira ainda não possui ações.
                                         </div>
                                     <?php else: ?>
+                                        <!-- Card do Valor Total Atual -->
+                                        <div class="card border-0 bg-primary bg-opacity-10 rounded-4 mb-4 value-display-card">
+                                            <div class="card-body">
+                                                <div class="row align-items-center">
+                                                    <div class="col-md-8">
+                                                        <h6 class="fw-bold mb-2 text-primary">
+                                                            <i class="bi bi-cash-stack me-2"></i>
+                                                            Valor Total da Composição Atual
+                                                        </h6>
+                                                        <p class="text-muted small mb-0">
+                                                            Soma do valor investido em todas as ações da carteira
+                                                        </p>
+                                                    </div>
+                                                    <div class="col-md-4 text-end">
+                                                        <div class="fw-bold fs-3 text-primary">
+                                                            R$ <?= number_format($currentTotalValue, 2, ',', '.') ?>
+                                                        </div>
+                                                        <small class="text-muted">
+                                                            <?= count($currentStocks) ?> ação(ões)
+                                                        </small>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
                                         <div class="row g-3">
                                             <?php foreach ($currentStocks as $stock):
                                                 $allocationPercent = $stock['target_allocation'] * 100;
@@ -163,10 +195,6 @@ ob_start();
                                                     </div>
                                                 </div>
                                                 <div>
-                                                    <small class="text-muted">Total de Ações</small>
-                                                    <div class="fw-bold"><?= count($currentStocks) ?></div>
-                                                </div>
-                                                <div>
                                                     <small class="text-muted">Próximo Passo</small>
                                                     <div>
                                                         <button class="btn btn-primary btn-sm" onclick="nextStep()">
@@ -192,8 +220,10 @@ ob_start();
                                                         <i class="bi bi-1-circle text-primary"></i>
                                                     </div>
                                                     <div>
-                                                        <small class="fw-bold">Venda do Excessivo</small>
-                                                        <p class="small text-muted mb-0">Vendemos ações que ultrapassam o percentual alvo</p>
+                                                        <small class="fw-bold">Defina o Novo Total</small>
+                                                        <p class="small text-muted mb-0">
+                                                            Informe o valor total desejado para a nova composição
+                                                        </p>
                                                     </div>
                                                 </div>
                                                 <div class="d-flex mb-2">
@@ -201,17 +231,21 @@ ob_start();
                                                         <i class="bi bi-2-circle text-primary"></i>
                                                     </div>
                                                     <div>
-                                                        <small class="fw-bold">Compra do Insuficiente</small>
-                                                        <p class="small text-muted mb-0">Compramos ações abaixo do percentual alvo</p>
+                                                        <small class="fw-bold">Adicione as Ações</small>
+                                                        <p class="small text-muted mb-0">
+                                                            Informe os tickers e percentuais de alocação
+                                                        </p>
                                                     </div>
                                                 </div>
-                                                <div class="d-flex">
+                                                <div class="d-flex mb-2">
                                                     <div class="me-3">
                                                         <i class="bi bi-3-circle text-primary"></i>
                                                     </div>
                                                     <div>
-                                                        <small class="fw-bold">Ajuste de Lotes</small>
-                                                        <p class="small text-muted mb-0">Respeitamos lotes padrão (100) quando necessário</p>
+                                                        <small class="fw-bold">Calcule Automaticamente</small>
+                                                        <p class="small text-muted mb-0">
+                                                            O sistema divide entre lotes cheios e fracionários
+                                                        </p>
                                                     </div>
                                                 </div>
                                             </div>
@@ -221,8 +255,9 @@ ob_start();
                                             <h6 class="fw-bold mb-2">Dicas Importantes</h6>
                                             <ul class="small text-muted ps-3">
                                                 <li>As alocações devem somar 100%</li>
-                                                <li>Considere incluir caixa disponível para compras</li>
-                                                <li>Ações fracionárias podem ser ajustadas em qualquer quantidade</li>
+                                                <li>Você pode aumentar ou reduzir o valor total</li>
+                                                <li>Apenas informe tickers de lote cheio (ex: PETR4)</li>
+                                                <li>O sistema calculará automaticamente a divisão entre lotes cheios e fracionários</li>
                                                 <li>Taxas de corretagem não estão incluídas no cálculo</li>
                                             </ul>
                                         </div>
@@ -244,12 +279,89 @@ ob_start();
                                             Defina a Nova Composição
                                         </h5>
 
+                                        <!-- Card de Valores -->
+                                        <div class="card border-0 shadow-sm rounded-4 mb-4 value-display-card">
+                                            <div class="card-body">
+                                                <h6 class="fw-bold mb-3">
+                                                    <i class="bi bi-calculator me-2 text-primary"></i>
+                                                    Valores da Composição
+                                                </h6>
+
+                                                <div class="row align-items-center mb-4">
+                                                    <div class="col-md-6">
+                                                        <div class="card border-0 bg-light rounded-3">
+                                                            <div class="card-body">
+                                                                <small class="text-muted d-block">Total Atual da Composição</small>
+                                                                <div class="fw-bold fs-4 text-primary">
+                                                                    R$ <?= number_format($currentTotalValue, 2, ',', '.') ?>
+                                                                </div>
+                                                                <small class="text-muted">
+                                                                    <?= count($currentStocks) ?> ação(ões) na carteira
+                                                                </small>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <div class="card border-0 bg-light rounded-3">
+                                                            <div class="card-body">
+                                                                <small class="text-muted d-block">Valor Total da Nova Composição</small>
+                                                                <div class="input-group">
+                                                                    <span class="input-group-text bg-white border-0">R$</span>
+                                                                    <input type="text"
+                                                                           class="form-control border-0 bg-white"
+                                                                           name="new_total_value"
+                                                                           id="new_total_value"
+                                                                           value="<?= number_format($currentTotalValue, 2, ',', '.') ?>"
+                                                                           placeholder="0,00"
+                                                                           maxlength="50"
+                                                                           oninput="updateValueDifference()">
+                                                                </div>
+                                                                <small class="text-muted">
+                                                                    Ajuste para cima ou para baixo
+                                                                </small>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div class="row">
+                                                    <div class="col-md-6">
+                                                        <div class="d-flex align-items-center">
+                                                            <div class="me-3">
+                                                                <i class="bi bi-info-circle text-info fs-4"></i>
+                                                            </div>
+                                                            <div>
+                                                                <small class="text-muted">Como funciona:</small>
+                                                                <p class="small mb-0">
+                                                                    Exemplo: Se seu total atual é R$ 300.000,00 e você quer
+                                                                    R$ 294.000,00, está reduzindo. Se quer R$ 356.000,00, está aumentando.
+                                                                </p>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <div class="card border-0 bg-light rounded-3" id="differenceCard">
+                                                            <div class="card-body text-center">
+                                                                <small class="text-muted d-block">Diferença</small>
+                                                                <div class="fw-bold fs-5" id="valueDifference">
+                                                                    R$ 0,00
+                                                                </div>
+                                                                <small class="text-muted" id="differencePercentage">
+                                                                    0,00%
+                                                                </small>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
                                         <div class="card border-0 shadow-sm rounded-4 mb-4">
                                             <div class="card-header bg-white">
                                                 <div class="d-flex justify-content-between align-items-center">
                                                     <div>
                                                         <h6 class="mb-0 fw-bold">Ações e Percentuais</h6>
-                                                        <small class="text-muted">Adicione todas as ações da nova composição</small>
+                                                        <small class="text-muted">Adicione todas as ações da nova composição (informe apenas tickers de lote cheio)</small>
                                                     </div>
                                                     <button type="button" class="btn btn-sm btn-outline-primary rounded-pill"
                                                             onclick="addNewStock()">
@@ -262,11 +374,11 @@ ob_start();
                                                     <!-- Linha de exemplo -->
                                                     <div class="row g-3 mb-3 composition-row">
                                                         <div class="col-md-5">
-                                                            <label class="form-label small fw-bold">Ticker</label>
+                                                            <label class="form-label small fw-bold">Ticker (lote cheio)</label>
                                                             <input type="text"
                                                                    class="form-control ticker-input"
                                                                    name="tickers[]"
-                                                                   placeholder="Ex: PETR4, VALE3"
+                                                                   placeholder="Ex: PETR4, ITUB4"
                                                                    maxlength="10"
                                                                    required>
                                                         </div>
@@ -312,31 +424,6 @@ ob_start();
                                                 <?php endif; ?>
                                             </div>
                                         </div>
-
-                                        <div class="card border-0 shadow-sm rounded-4">
-                                            <div class="card-body">
-                                                <h6 class="fw-bold mb-3">Caixa Disponível para Compras</h6>
-                                                <div class="row align-items-center">
-                                                    <div class="col-md-8">
-                                                        <p class="small text-muted mb-2">
-                                                            Informe o valor em caixa disponível para compras adicionais.
-                                                            Se deixar zero, o rebalanceamento usará apenas a venda de ações para financiar as compras.
-                                                        </p>
-                                                    </div>
-                                                    <div class="col-md-4">
-                                                        <div class="input-group">
-                                                            <span class="input-group-text">R$</span>
-                                                            <input type="text"
-                                                                   class="form-control"
-                                                                   name="available_cash"
-                                                                   id="available_cash"
-                                                                   value="0,00"
-                                                                   placeholder="0,00">
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
                                     </div>
 
                                     <div class="col-lg-4">
@@ -370,6 +457,22 @@ ob_start();
                                                             <small class="text-muted">Status da Soma</small>
                                                             <small class="fw-bold" id="sumStatus">-</small>
                                                         </div>
+                                                        <div class="d-flex justify-content-between mb-1">
+                                                            <small class="text-muted">Valor Total Atual</small>
+                                                            <small class="fw-bold text-primary">
+                                                                R$ <?= number_format($currentTotalValue, 2, ',', '.') ?>
+                                                            </small>
+                                                        </div>
+                                                        <div class="d-flex justify-content-between mb-1">
+                                                            <small class="text-muted">Novo Valor Total</small>
+                                                            <small class="fw-bold text-success" id="newTotalDisplay">
+                                                                R$ <?= number_format($currentTotalValue, 2, ',', '.') ?>
+                                                            </small>
+                                                        </div>
+                                                        <div class="d-flex justify-content-between mb-1">
+                                                            <small class="text-muted">Diferença</small>
+                                                            <small class="fw-bold" id="diffDisplay">R$ 0,00</small>
+                                                        </div>
                                                     </div>
 
                                                     <hr>
@@ -381,7 +484,7 @@ ob_start();
                                                             Calcular Rebalanceamento
                                                         </button>
                                                         <small class="text-center mt-2 text-muted">
-                                                            O cálculo considerará preços de mercado atuais
+                                                            O sistema calculará automaticamente a divisão entre lotes cheios e fracionários
                                                         </small>
                                                     </div>
                                                 </div>
@@ -391,17 +494,28 @@ ob_start();
                                                 <div class="card-body">
                                                     <h6 class="fw-bold mb-3">
                                                         <i class="bi bi-info-circle text-info me-2"></i>
-                                                        Sobre Lotes
+                                                        Sobre Lotes Cheios e Fracionários
                                                     </h6>
                                                     <div class="alert alert-info border-0 bg-opacity-10 small">
-                                                        <p class="mb-2">
+                                                        <div class="mb-2">
                                                             <i class="bi bi-check-circle me-1"></i>
-                                                            <strong>Ações Fracionárias:</strong> Qualquer quantidade (ex: B3SA3F, ETFs)
-                                                        </p>
-                                                        <p class="mb-0">
+                                                            <strong>Informe apenas tickers de lote cheio:</strong> PETR4, ITUB4, VALE3, etc.
+                                                        </div>
+                                                        <div class="mb-2">
+                                                            <i class="bi bi-lightbulb me-1"></i>
+                                                            <strong>O sistema calcula automaticamente:</strong><br>
+                                                            <small class="text-muted">
+                                                                Exemplo: Para 147 ITUBs necessários → 100 ITUB4 (1 lote) + 47 ITUB4F (fracionário)
+                                                            </small>
+                                                        </div>
+                                                        <div class="mb-0">
                                                             <i class="bi bi-123 me-1"></i>
-                                                            <strong>Lotes Padrão:</strong> Múltiplos de 100 (ex: PETR4, VALE3)
-                                                        </p>
+                                                            <strong>Vantagens:</strong><br>
+                                                            <small class="text-muted">
+                                                                • Lotes cheios: melhor liquidez<br>
+                                                                • Fracionários: ajuste preciso da quantidade
+                                                            </small>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </div>
@@ -420,14 +534,17 @@ ob_start();
         document.addEventListener('DOMContentLoaded', function() {
             // Inicializar com uma linha vazia
             updateTotalAllocation();
+            updateValueDifference();
 
-            // Formatação de moeda
-            const cashInput = document.getElementById('available_cash');
-            cashInput.addEventListener('blur', function() {
-                let value = this.value.replace(',', '.');
+            // Formatação de moeda para novo valor total
+            const newTotalInput = document.getElementById('new_total_value');
+            newTotalInput.addEventListener('blur', function() {
+                let value = this.value.replace(/\./g, '').replace(',', '.');
+                value = value.replace(/[^0-9.]/g, ''); // Clean input
                 if (value && !isNaN(value)) {
-                    this.value = parseFloat(value).toFixed(2).replace('.', ',');
+                    this.value = parseFloat(value).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
                 }
+                updateValueDifference();
             });
 
             // Atualizar alocação quando inputs mudam
@@ -470,7 +587,7 @@ ob_start();
             newRow.className = 'row g-3 mb-3 composition-row';
             newRow.innerHTML = `
         <div class="col-md-5">
-            <label class="form-label small fw-bold">Ticker</label>
+            <label class="form-label small fw-bold">Ticker (lote cheio)</label>
             <input type="text"
                    class="form-control ticker-input"
                    name="tickers[]"
@@ -578,6 +695,62 @@ ob_start();
                 allocationStatus.className = 'text-warning fw-bold';
                 calculateBtn.disabled = false;
                 document.getElementById('sumStatus').innerHTML = `<span class="text-warning fw-bold">${total.toFixed(1)}%</span>`;
+            }
+        }
+
+        function updateValueDifference() {
+            const currentTotal = <?= $currentTotalValue ?>;
+            const newTotalInput = document.getElementById('new_total_value');
+            const valueDifference = document.getElementById('valueDifference');
+            const differencePercentage = document.getElementById('differencePercentage');
+            const differenceCard = document.getElementById('differenceCard');
+            const newTotalDisplay = document.getElementById('newTotalDisplay');
+            const diffDisplay = document.getElementById('diffDisplay');
+
+            // Formatar entrada
+            let value = newTotalInput.value.replace(/\./g, '').replace(',', '.');
+            value = value.replace(/[^0-9.]/g, ''); // Clean input
+            value = parseFloat(value) || 0;
+
+            // Atualizar campo com formatação
+            // newTotalInput.value = value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+            // Atualizar display do novo total
+            newTotalDisplay.textContent = 'R$ ' + value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+            // Calcular diferença
+            const difference = value - currentTotal;
+            const percent = currentTotal > 0 ? (difference / currentTotal) * 100 : 0;
+
+            // Atualizar display
+            valueDifference.textContent = difference.toLocaleString('pt-BR', {
+                style: 'currency',
+                currency: 'BRL'
+            });
+
+            diffDisplay.textContent = difference.toLocaleString('pt-BR', {
+                style: 'currency',
+                currency: 'BRL'
+            });
+
+            differencePercentage.textContent = percent.toFixed(2) + '%';
+
+            // Colorir baseado na diferença
+            if (difference > 0) {
+                valueDifference.className = 'fw-bold fs-5 text-success';
+                diffDisplay.className = 'fw-bold text-success';
+                differenceCard.className = 'card border-0 bg-success bg-opacity-10 rounded-3';
+                differencePercentage.className = 'text-success';
+            } else if (difference < 0) {
+                valueDifference.className = 'fw-bold fs-5 text-danger';
+                diffDisplay.className = 'fw-bold text-danger';
+                differenceCard.className = 'card border-0 bg-danger bg-opacity-10 rounded-3';
+                differencePercentage.className = 'text-danger';
+            } else {
+                valueDifference.className = 'fw-bold fs-5 text-muted';
+                diffDisplay.className = 'fw-bold text-muted';
+                differenceCard.className = 'card border-0 bg-light rounded-3';
+                differencePercentage.className = 'text-muted';
             }
         }
 

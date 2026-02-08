@@ -304,4 +304,11 @@ function formatFullDate($date) {
     return $months[$month] . ' de ' . $year;
 }
 
+function formatMoney($value, $decimalPlaces = 2) {
+    if (!is_numeric($value)) {
+        return 'R$ 0,00';
+    }
+    return 'R$ ' . number_format($value, $decimalPlaces, ',', '.');
+}
+
 ?>

@@ -1,20 +1,23 @@
 <?php
-// app/controllers/RebalanceController.php
+// app/controllers/RebalanceController.php (atualizado)
 
 namespace App\Controllers;
 
 use App\Models\Wallet;
+use App\Models\WalletStock;
 use App\Services\RebalanceService;
 use App\Core\Session;
 use App\Core\Auth;
 
 class RebalanceController {
     private $walletModel;
+    private $walletStockModel;
     private $rebalanceService;
     private $params;
 
     public function __construct($params = []) {
         $this->walletModel = new Wallet();
+        $this->walletStockModel = new WalletStock();
         $this->rebalanceService = new RebalanceService();
         $this->params = $params;
         Session::start();
@@ -36,6 +39,14 @@ class RebalanceController {
             Session::setFlash('error', 'Acesso negado.');
             header('Location: /index.php?url=' . obfuscateUrl('wallet'));
             exit;
+        }
+
+        // Calcular valor total atual da carteira
+        $currentStocks = $this->walletStockModel->findByWalletId($walletId);
+        $currentTotalValue = 0;
+
+        foreach ($currentStocks as $stock) {
+            $currentTotalValue += $stock['total_cost'];
         }
 
         require_once __DIR__ . '/../views/rebalance/index.php';
@@ -67,7 +78,7 @@ class RebalanceController {
 
             // Obter composição do formulário
             $newComposition = [];
-            $availableCash = (float)str_replace(',', '.', $_POST['available_cash'] ?? '0');
+            $newTotalValue = (float)str_replace(['.', ','], ['', '.'], $_POST['new_total_value'] ?? '0');
 
             if (isset($_POST['tickers']) && is_array($_POST['tickers'])) {
                 foreach ($_POST['tickers'] as $index => $ticker) {
@@ -90,7 +101,7 @@ class RebalanceController {
             $result = $this->rebalanceService->calculateRebalance(
                 $walletId,
                 $newComposition,
-                $availableCash
+                $newTotalValue
             );
 
             require_once __DIR__ . '/../views/rebalance/result.php';
@@ -100,6 +111,7 @@ class RebalanceController {
         header('Location: /index.php?url=' . obfuscateUrl('rebalance/index/' . $walletId));
         exit;
     }
+
 
     public function execute() {
         Auth::checkAuthentication();
@@ -111,20 +123,30 @@ class RebalanceController {
                 redirectBack('/index.php?url=' . obfuscateUrl('rebalance/index/' . $walletId));
             }
 
-            // Em uma implementação real, aqui você processaria as transações
-            // Por enquanto, apenas simulamos
+            // Decodificar instruções do formulário
+            $instructions = json_decode($_POST['instructions'] ?? '[]', true);
+
+            if (empty($instructions)) {
+                Session::setFlash('error', 'Instruções de rebalanceamento inválidas.');
+                header('Location: /index.php?url=' . obfuscateUrl('rebalance/index/' . $walletId));
+                exit;
+            }
+
+            // Executar rebalanceamento
             $result = $this->rebalanceService->executeRebalance(
                 $walletId,
-                json_decode($_POST['instructions'] ?? '[]', true),
+                $instructions,
                 $_SESSION['user_id']
             );
 
             if ($result['success']) {
-                Session::setFlash('success', 'Rebalanceamento aplicado com sucesso!');
+                Session::setFlash('success', $result['message']);
                 header('Location: /index.php?url=' . obfuscateUrl('wallet_stocks/index/' . $walletId));
                 exit;
             } else {
-                Session::setFlash('error', 'Erro ao aplicar rebalanceamento.');
+                Session::setFlash('error', $result['message']);
+                header('Location: /index.php?url=' . obfuscateUrl('rebalance/index/' . $walletId));
+                exit;
             }
         }
 

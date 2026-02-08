@@ -175,3 +175,16 @@ ADD COLUMN total_invested DECIMAL(15,2) DEFAULT 0.00,
 ADD COLUMN current_value DECIMAL(15,2) DEFAULT 0.00,
 ADD COLUMN profit_loss DECIMAL(15,2) DEFAULT 0.00,
 ADD COLUMN last_rebalanced_at TIMESTAMP NULL;
+
+CREATE TABLE IF NOT EXISTS rebalance_logs (
+                                              id INT PRIMARY KEY AUTO_INCREMENT,
+                                              wallet_id INT NOT NULL,
+                                              user_id INT NOT NULL,
+                                              instructions JSON,
+                                              executed_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                                              FOREIGN KEY (wallet_id) REFERENCES wallets(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    INDEX idx_wallet_id (wallet_id),
+    INDEX idx_user_id (user_id),
+    INDEX idx_executed_at (executed_at)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

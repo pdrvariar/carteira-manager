@@ -360,6 +360,42 @@
     color: #dc3545;
 }
 
+/* Adicione ao wallet_stocks.css */
+
+.lot-breakdown {
+    border-left: 3px solid #0d6efd;
+    padding-left: 10px;
+    margin: 5px 0;
+}
+
+.lot-full {
+    background-color: rgba(13, 110, 253, 0.1);
+    border-radius: 4px;
+    padding: 2px 6px;
+    margin-right: 5px;
+}
+
+.lot-fractional {
+    background-color: rgba(32, 201, 151, 0.1);
+    border-radius: 4px;
+    padding: 2px 6px;
+    margin-right: 5px;
+}
+
+.value-diff-positive {
+    color: #198754;
+    font-weight: bold;
+}
+
+.value-diff-negative {
+    color: #dc3545;
+    font-weight: bold;
+}
+
+.value-diff-neutral {
+    color: #6c757d;
+}
+
 /* Modo escuro (opcional) */
 @media (prefers-color-scheme: dark) {
     .stock-card {

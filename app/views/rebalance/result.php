@@ -36,12 +36,42 @@ $additional_css = '
             background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
             border: 1px solid #e9ecef;
         }
-        .composition-comparison {
-            position: relative;
-            height: 300px;
-        }
         .fade-in {
             animation: fadeIn 0.5s ease-in;
+        }
+        .lot-breakdown {
+            border-left: 3px solid #0d6efd;
+            padding-left: 10px;
+            margin: 5px 0;
+        }
+        .lot-full {
+            background-color: rgba(13, 110, 253, 0.1);
+            border-radius: 4px;
+            padding: 2px 6px;
+            margin-right: 5px;
+        }
+        .lot-fractional {
+            background-color: rgba(32, 201, 151, 0.1);
+            border-radius: 4px;
+            padding: 2px 6px;
+            margin-right: 5px;
+        }
+        .value-diff-positive {
+            color: #198754;
+            font-weight: bold;
+        }
+        .value-diff-negative {
+            color: #dc3545;
+            font-weight: bold;
+        }
+        .value-diff-neutral {
+            color: #6c757d;
+        }
+        .lot-split {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-radius: 8px;
+            padding: 10px;
+            margin: 5px 0;
         }
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(10px); }
@@ -87,18 +117,50 @@ ob_start();
                         </div>
                         <div class="card-body">
                             <div class="row">
-                                <div class="col-md-6">
+                                <div class="col-md-4">
                                     <div class="d-flex align-items-center mb-3">
                                         <div class="metric-icon bg-primary bg-opacity-10 text-primary me-3">
                                             <i class="bi bi-cash-stack fs-4"></i>
                                         </div>
                                         <div>
-                                            <small class="text-muted d-block">Valor Total da Carteira</small>
-                                            <h4 class="fw-bold mb-0">R$ <?= number_format($result['total_value'], 2, ',', '.') ?></h4>
+                                            <small class="text-muted d-block">Total Atual</small>
+                                            <h4 class="fw-bold mb-0">R$ <?= number_format($result['current_total_value'], 2, ',', '.') ?></h4>
                                         </div>
                                     </div>
                                 </div>
-                                <div class="col-md-6">
+                                <div class="col-md-4">
+                                    <div class="d-flex align-items-center mb-3">
+                                        <div class="metric-icon bg-success bg-opacity-10 text-success me-3">
+                                            <i class="bi bi-graph-up-arrow fs-4"></i>
+                                        </div>
+                                        <div>
+                                            <small class="text-muted d-block">Novo Total</small>
+                                            <h4 class="fw-bold mb-0">R$ <?= number_format($result['new_total_value'], 2, ',', '.') ?></h4>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="d-flex align-items-center mb-3">
+                                        <div class="metric-icon
+                                        <?= $result['value_difference'] > 0 ? 'bg-success bg-opacity-10 text-success' :
+                                                ($result['value_difference'] < 0 ? 'bg-danger bg-opacity-10 text-danger' : 'bg-secondary bg-opacity-10 text-secondary') ?>
+                                        me-3">
+                                            <i class="bi bi-arrow-left-right fs-4"></i>
+                                        </div>
+                                        <div>
+                                            <small class="text-muted d-block">Diferença</small>
+                                            <h4 class="fw-bold mb-0
+                                            <?= $result['value_difference'] > 0 ? 'text-success' :
+                                                    ($result['value_difference'] < 0 ? 'text-danger' : 'text-secondary') ?>">
+                                                R$ <?= number_format($result['value_difference'], 2, ',', '.') ?>
+                                            </h4>
+                                            <small class="text-muted">
+                                                <?= number_format(($result['value_difference'] / $result['current_total_value']) * 100, 2, ',', '.') ?>%
+                                            </small>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
                                     <div class="d-flex align-items-center mb-3">
                                         <div class="metric-icon bg-info bg-opacity-10 text-info me-3">
                                             <i class="bi bi-arrow-left-right fs-4"></i>
@@ -109,25 +171,32 @@ ob_start();
                                         </div>
                                     </div>
                                 </div>
-                                <div class="col-md-6">
+                                <div class="col-md-4">
                                     <div class="d-flex align-items-center mb-3">
-                                        <div class="metric-icon bg-success bg-opacity-10 text-success me-3">
+                                        <div class="metric-icon bg-warning bg-opacity-10 text-warning me-3">
                                             <i class="bi bi-graph-up-arrow fs-4"></i>
                                         </div>
                                         <div>
                                             <small class="text-muted d-block">Eficiência do Ajuste</small>
-                                            <h4 class="fw-bold mb-0"><?= number_format($result['metrics']['efficiency'], 1) ?>%</h4>
+                                            <h4 class="fw-bold mb-0"><?= number_format($result['metrics']['execution_efficiency'] ?? 0, 1) ?>%</h4>
                                         </div>
                                     </div>
                                 </div>
-                                <div class="col-md-6">
+                                <div class="col-md-4">
                                     <div class="d-flex align-items-center mb-3">
-                                        <div class="metric-icon bg-warning bg-opacity-10 text-warning me-3">
+                                        <div class="metric-icon
+                                        <?= $result['metrics']['net_cash_flow'] > 0 ? 'bg-success bg-opacity-10 text-success' :
+                                                ($result['metrics']['net_cash_flow'] < 0 ? 'bg-danger bg-opacity-10 text-danger' : 'bg-secondary bg-opacity-10 text-secondary') ?>
+                                        me-3">
                                             <i class="bi bi-wallet fs-4"></i>
                                         </div>
                                         <div>
-                                            <small class="text-muted d-block">Caixa Restante</small>
-                                            <h4 class="fw-bold mb-0">R$ <?= number_format($result['metrics']['remaining_cash'], 2, ',', '.') ?></h4>
+                                            <small class="text-muted d-block">Fluxo Líquido</small>
+                                            <h4 class="fw-bold mb-0
+                                            <?= $result['metrics']['net_cash_flow'] > 0 ? 'text-success' :
+                                                    ($result['metrics']['net_cash_flow'] < 0 ? 'text-danger' : 'text-secondary') ?>">
+                                                R$ <?= number_format($result['metrics']['net_cash_flow'], 2, ',', '.') ?>
+                                            </h4>
                                         </div>
                                     </div>
                                 </div>
@@ -145,8 +214,8 @@ ob_start();
                                     <div class="col">
                                         <div class="text-primary">
                                             <i class="bi bi-arrow-right fs-1"></i>
-                                            <div class="fw-bold fs-4">R$ <?= number_format($result['metrics']['net_cash_flow'], 2, ',', '.') ?></div>
-                                            <small>Fluxo Líquido</small>
+                                            <div class="fw-bold fs-4">R$ <?= number_format($result['value_difference'], 2, ',', '.') ?></div>
+                                            <small>Diferença de Valor</small>
                                         </div>
                                     </div>
                                     <div class="col">
@@ -158,6 +227,37 @@ ob_start();
                                     </div>
                                 </div>
                             </div>
+
+                            <?php if ($result['value_difference'] != 0): ?>
+                                <div class="alert
+                            <?= $result['value_difference'] > 0 ? 'alert-success' : 'alert-warning' ?>
+                            border-0 bg-opacity-10 mt-3">
+                                    <div class="d-flex">
+                                        <i class="bi
+                                    <?= $result['value_difference'] > 0 ? 'bi-arrow-up-circle' : 'bi-arrow-down-circle' ?>
+                                    fs-4 me-3
+                                    <?= $result['value_difference'] > 0 ? 'text-success' : 'text-warning' ?>"></i>
+                                        <div>
+                                            <h6 class="fw-bold mb-1">
+                                                <?= $result['value_difference'] > 0 ? 'Aumento do Valor Total' : 'Redução do Valor Total' ?>
+                                            </h6>
+                                            <p class="mb-0 small">
+                                                <?php if ($result['value_difference'] > 0): ?>
+                                                    Você está aumentando o valor total da carteira em
+                                                    <strong>R$ <?= number_format($result['value_difference'], 2, ',', '.') ?></strong>
+                                                    (<?= number_format(($result['value_difference'] / $result['current_total_value']) * 100, 2, ',', '.') ?>%).
+                                                    Isso exigirá recursos adicionais.
+                                                <?php else: ?>
+                                                    Você está reduzindo o valor total da carteira em
+                                                    <strong>R$ <?= number_format(abs($result['value_difference']), 2, ',', '.') ?></strong>
+                                                    (<?= number_format(abs($result['value_difference'] / $result['current_total_value']) * 100, 2, ',', '.') ?>%).
+                                                    Você terá recursos disponíveis após as vendas.
+                                                <?php endif; ?>
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            <?php endif; ?>
                         </div>
                     </div>
                 </div>
@@ -174,7 +274,7 @@ ob_start();
                             <div class="mb-3">
                                 <p class="small text-muted">
                                     <i class="bi bi-info-circle me-1"></i>
-                                    Execute as transações na ordem sugerida para otimizar o caixa.
+                                    Execute as transações na ordem sugerida para otimizar os recursos.
                                 </p>
                             </div>
 
@@ -251,49 +351,111 @@ ob_start();
                                                     <?php endif; ?>
 
                                                     <!-- Detalhes específicos por ação -->
-                                                    <?php if ($step['action'] === 'sell'): ?>
-                                                        <div class="bg-light rounded-2 p-2">
+                                                    <?php if ($step['action'] === 'sell' && isset($step['details']['full_lot_quantity'])): ?>
+                                                        <div class="lot-split">
+                                                            <h6 class="fw-bold mb-2 small">Divisão por Tipo de Lote:</h6>
                                                             <div class="row small">
-                                                                <div class="col-4">
-                                                                    <small class="text-muted">Ticker</small>
-                                                                    <div class="fw-bold"><?= $step['details']['ticker'] ?></div>
-                                                                </div>
-                                                                <div class="col-4">
-                                                                    <small class="text-muted">Quantidade</small>
-                                                                    <div class="fw-bold"><?= number_format($step['details']['quantity']) ?></div>
-                                                                </div>
-                                                                <div class="col-4">
-                                                                    <small class="text-muted">Valor Total</small>
-                                                                    <div class="fw-bold text-danger">
+                                                                <?php if ($step['details']['full_lot_quantity'] > 0): ?>
+                                                                    <div class="col-6">
+                                                                        <div class="d-flex align-items-center mb-2">
+                                                                    <span class="lot-full me-2">
+                                                                        <i class="bi bi-box-seam"></i>
+                                                                    </span>
+                                                                            <div>
+                                                                                <div class="fw-bold"><?= number_format($step['details']['full_lot_quantity']) ?></div>
+                                                                                <small class="text-muted"><?= $step['details']['full_lot_ticker'] ?></small>
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                <?php endif; ?>
+
+                                                                <?php if ($step['details']['fractional_quantity'] > 0): ?>
+                                                                    <div class="col-6">
+                                                                        <div class="d-flex align-items-center mb-2">
+                                                                    <span class="lot-fractional me-2">
+                                                                        <i class="bi bi-scissors"></i>
+                                                                    </span>
+                                                                            <div>
+                                                                                <div class="fw-bold"><?= number_format($step['details']['fractional_quantity']) ?></div>
+                                                                                <small class="text-muted"><?= $step['details']['fractional_ticker'] ?? $step['details']['ticker'].'F' ?></small>
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                <?php endif; ?>
+
+                                                                <div class="col-12">
+                                                                    <hr class="my-2">
+                                                                    <div class="d-flex justify-content-between">
+                                                                        <small class="text-muted">Total de Cotas</small>
+                                                                        <span class="fw-bold"><?= number_format($step['details']['quantity']) ?></span>
+                                                                    </div>
+                                                                    <div class="d-flex justify-content-between">
+                                                                        <small class="text-muted">Valor Total</small>
+                                                                        <span class="fw-bold text-danger">
                                                                         R$ <?= number_format($step['details']['total_sale'], 2, ',', '.') ?>
+                                                                    </span>
                                                                     </div>
                                                                 </div>
                                                             </div>
                                                         </div>
                                                     <?php elseif ($step['action'] === 'buy_new' || $step['action'] === 'buy_additional'): ?>
-                                                        <div class="bg-light rounded-2 p-2">
+                                                        <div class="lot-split">
+                                                            <h6 class="fw-bold mb-2 small">Divisão por Tipo de Lote:</h6>
                                                             <div class="row small">
-                                                                <div class="col-4">
-                                                                    <small class="text-muted">Ticker</small>
-                                                                    <div class="fw-bold"><?= $step['details']['ticker'] ?></div>
-                                                                </div>
-                                                                <div class="col-4">
-                                                                    <small class="text-muted">Quantidade</small>
-                                                                    <div class="fw-bold">
-                                                                        <?= number_format($step['details']['quantity_needed'] ?? $step['details']['quantity_executed'] ?? 0) ?>
+                                                                <?php if ($step['details']['full_lot_quantity'] > 0): ?>
+                                                                    <div class="col-6">
+                                                                        <div class="d-flex align-items-center mb-2">
+                                                                    <span class="lot-full me-2">
+                                                                        <i class="bi bi-box-seam"></i>
+                                                                    </span>
+                                                                            <div>
+                                                                                <div class="fw-bold"><?= number_format($step['details']['full_lot_quantity']) ?></div>
+                                                                                <small class="text-muted"><?= $step['details']['full_lot_ticker'] ?></small>
+                                                                                <div class="text-muted smaller">
+                                                                                    (<?= number_format($step['details']['full_lot_quantity'] / 100, 0) ?> lotes)
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
                                                                     </div>
-                                                                </div>
-                                                                <div class="col-4">
-                                                                    <small class="text-muted">Valor Total</small>
-                                                                    <div class="fw-bold text-success">
-                                                                        R$ <?= number_format($step['details']['total_cost'] ?? $step['details']['partial_cost'] ?? 0, 2, ',', '.') ?>
+                                                                <?php endif; ?>
+
+                                                                <?php if ($step['details']['fractional_quantity'] > 0): ?>
+                                                                    <div class="col-6">
+                                                                        <div class="d-flex align-items-center mb-2">
+                                                                    <span class="lot-fractional me-2">
+                                                                        <i class="bi bi-scissors"></i>
+                                                                    </span>
+                                                                            <div>
+                                                                                <div class="fw-bold"><?= number_format($step['details']['fractional_quantity']) ?></div>
+                                                                                <small class="text-muted"><?= $step['details']['fractional_ticker'] ?? $step['details']['ticker'].'F' ?></small>
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                <?php endif; ?>
+
+                                                                <div class="col-12">
+                                                                    <hr class="my-2">
+                                                                    <div class="d-flex justify-content-between">
+                                                                        <small class="text-muted">Total Necessário</small>
+                                                                        <span class="fw-bold"><?= number_format($step['details']['quantity_needed']) ?></span>
+                                                                    </div>
+                                                                    <div class="d-flex justify-content-between">
+                                                                        <small class="text-muted">Valor Total</small>
+                                                                        <span class="fw-bold text-success">
+                                                                        R$ <?= number_format($step['details']['total_cost'], 2, ',', '.') ?>
+                                                                    </span>
                                                                     </div>
                                                                 </div>
                                                             </div>
+
                                                             <?php if ($step['details']['execution'] === 'partial'): ?>
                                                                 <div class="alert alert-warning border-0 small mt-2 mb-0">
                                                                     <i class="bi bi-exclamation-triangle me-1"></i>
-                                                                    Compra parcial devido a limitação de caixa
+                                                                    <strong>Compra parcial:</strong>
+                                                                    Apenas <?= number_format($step['details']['quantity_executed']) ?> cotas serão compradas
+                                                                    (<?= number_format($step['details']['full_lot_executed']) ?> lote cheio +
+                                                                    <?= number_format($step['details']['fractional_executed']) ?> fracionário)
+                                                                    devido a limitação de recursos.
                                                                 </div>
                                                             <?php endif; ?>
                                                         </div>
@@ -316,7 +478,7 @@ ob_start();
                         <div class="card-header bg-white">
                             <h6 class="fw-bold mb-0">
                                 <i class="bi bi-pie-chart me-2"></i>
-                                Composição Atual
+                                Composição Atual (R$ <?= number_format($result['current_total_value'], 2, ',', '.') ?>)
                             </h6>
                         </div>
                         <div class="card-body">
@@ -332,7 +494,10 @@ ob_start();
                                         </tr>
                                         </thead>
                                         <tbody>
-                                        <?php foreach ($result['current_composition'] as $ticker => $data): ?>
+                                        <?php foreach ($result['current_composition'] as $ticker => $data):
+                                            $percent = $result['current_total_value'] > 0 ?
+                                                    ($data['current_value'] / $result['current_total_value']) * 100 : 0;
+                                            ?>
                                             <tr>
                                                 <td>
                                                     <span class="badge bg-primary bg-opacity-10 text-primary">
@@ -342,32 +507,12 @@ ob_start();
                                                 <td class="text-end fw-bold"><?= number_format($data['current_quantity']) ?></td>
                                                 <td class="text-end">R$ <?= number_format($data['current_value'], 2, ',', '.') ?></td>
                                                 <td class="text-end">
-                                                    <?php
-                                                    $percent = $result['total_value'] > 0 ?
-                                                        ($data['current_value'] / $result['total_value']) * 100 : 0;
-                                                    ?>
                                                     <span class="badge bg-light text-dark">
                                                         <?= number_format($percent, 1) ?>%
                                                     </span>
                                                 </td>
                                             </tr>
                                         <?php endforeach; ?>
-                                        <?php if ($result['available_cash'] > 0): ?>
-                                            <tr class="table-info">
-                                                <td>
-                                                    <span class="badge bg-info bg-opacity-10 text-info">
-                                                        <i class="bi bi-cash"></i> CAIXA
-                                                    </span>
-                                                </td>
-                                                <td class="text-end">-</td>
-                                                <td class="text-end fw-bold">R$ <?= number_format($result['available_cash'], 2, ',', '.') ?></td>
-                                                <td class="text-end">
-                                                    <span class="badge bg-info">
-                                                        <?= number_format(($result['available_cash'] / $result['total_value']) * 100, 1) ?>%
-                                                    </span>
-                                                </td>
-                                            </tr>
-                                        <?php endif; ?>
                                         </tbody>
                                         <tfoot class="table-light">
                                         <tr>
@@ -376,7 +521,7 @@ ob_start();
                                                 <?= array_sum(array_column($result['current_composition'], 'current_quantity')) ?>
                                             </th>
                                             <th class="text-end fw-bold">
-                                                R$ <?= number_format($result['total_value'], 2, ',', '.') ?>
+                                                R$ <?= number_format($result['current_total_value'], 2, ',', '.') ?>
                                             </th>
                                             <th class="text-end fw-bold">100%</th>
                                         </tr>
@@ -398,7 +543,7 @@ ob_start();
                         <div class="card-header bg-white">
                             <h6 class="fw-bold mb-0">
                                 <i class="bi bi-pie-chart-fill me-2 text-success"></i>
-                                Nova Composição (Alvo)
+                                Nova Composição (R$ <?= number_format($result['new_total_value'], 2, ',', '.') ?>)
                             </h6>
                         </div>
                         <div class="card-body">
@@ -410,7 +555,7 @@ ob_start();
                                             <th>Ação</th>
                                             <th class="text-end">Valor Alvo</th>
                                             <th class="text-end">% Alvo</th>
-                                            <th class="text-end">Status</th>
+                                            <th class="text-end">Ajuste</th>
                                         </tr>
                                         </thead>
                                         <tbody>
@@ -456,7 +601,7 @@ ob_start();
                                         <tr>
                                             <th>TOTAL</th>
                                             <th class="text-end fw-bold">
-                                                R$ <?= number_format($result['total_value'], 2, ',', '.') ?>
+                                                R$ <?= number_format($result['new_total_value'], 2, ',', '.') ?>
                                             </th>
                                             <th class="text-end fw-bold">100%</th>
                                             <th class="text-end"></th>
@@ -491,9 +636,9 @@ ob_start();
                                     <i class="bi bi-1-circle text-primary fs-4"></i>
                                 </div>
                                 <div>
-                                    <h6 class="fw-bold">Ordem das Transações</h6>
+                                    <h6 class="fw-bold">Divisão Automática</h6>
                                     <p class="small text-muted mb-0">
-                                        Execute as vendas primeiro para gerar caixa, depois as compras.
+                                        O sistema já calculou a divisão entre lotes cheios e fracionários para cada ação.
                                     </p>
                                 </div>
                             </div>
@@ -504,9 +649,9 @@ ob_start();
                                     <i class="bi bi-2-circle text-primary fs-4"></i>
                                 </div>
                                 <div>
-                                    <h6 class="fw-bold">Horário de Mercado</h6>
+                                    <h6 class="fw-bold">Ordem das Transações</h6>
                                     <p class="small text-muted mb-0">
-                                        Execute durante o horário de negociação (10h-17h) para melhores preços.
+                                        Execute as vendas primeiro para gerar recursos, depois as compras.
                                     </p>
                                 </div>
                             </div>
@@ -517,11 +662,26 @@ ob_start();
                                     <i class="bi bi-3-circle text-primary fs-4"></i>
                                 </div>
                                 <div>
-                                    <h6 class="fw-bold">Taxas e Custos</h6>
+                                    <h6 class="fw-bold">Preços de Mercado</h6>
                                     <p class="small text-muted mb-0">
-                                        Considere taxas de corretagem na execução das ordens.
+                                        Execute durante o horário de negociação (10h-17h) para melhores preços.
                                     </p>
                                 </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-info border-0 bg-opacity-10 mt-3">
+                        <div class="d-flex">
+                            <i class="bi bi-info-circle-fill text-info fs-4 me-3"></i>
+                            <div>
+                                <h6 class="fw-bold mb-1">Exemplo Prático</h6>
+                                <p class="small mb-0">
+                                    <strong>Para 147 ITUBs necessários:</strong><br>
+                                    • Compre 100 ITUB4 (1 lote cheio) no mercado à vista<br>
+                                    • Compre 47 ITUB4F no mercado fracionário<br>
+                                    • Total: 147 ações exatas para atingir a alocação desejada
+                                </p>
                             </div>
                         </div>
                     </div>
@@ -534,6 +694,7 @@ ob_start();
                                 <p class="small mb-0">
                                     Este é um plano sugerido baseado em preços atuais. Os preços podem variar durante a execução.
                                     Recomendamos executar todas as transações no mesmo dia para minimizar riscos de mercado.
+                                    Considere taxas de corretagem na execução das ordens.
                                 </p>
                             </div>
                         </div>
@@ -549,20 +710,6 @@ ob_start();
             const elements = document.querySelectorAll('.fade-in');
             elements.forEach((el, index) => {
                 el.style.animationDelay = `${index * 0.1}s`;
-            });
-
-            // Adicionar funcionalidade de expandir/detalhar
-            document.querySelectorAll('.step-card').forEach(card => {
-                card.addEventListener('click', function(e) {
-                    if (!e.target.closest('button') && !e.target.closest('a')) {
-                        const body = this.querySelector('.card-body');
-                        const details = body.querySelector('.transaction-details');
-
-                        if (details) {
-                            details.classList.toggle('d-none');
-                        }
-                    }
-                });
             });
         });
     </script>

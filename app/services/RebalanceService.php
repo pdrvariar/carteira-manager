@@ -1,5 +1,5 @@
 <?php
-// app/services/RebalanceService.php
+// app/services/RebalanceService.php (atualizado)
 
 namespace App\Services;
 
@@ -20,25 +20,24 @@ class RebalanceService {
      *
      * @param int $walletId ID da carteira
      * @param array $newComposition Nova composição [ticker => percentual]
-     * @param float $availableCash Caixa disponível para compras (opcional)
+     * @param float $newTotalValue Valor total da nova composição
      * @return array Instruções de rebalanceamento
      */
-    public function calculateRebalance($walletId, $newComposition, $availableCash = 0) {
+    public function calculateRebalance($walletId, $newComposition, $newTotalValue) {
         // 1. Obter carteira atual
         $currentStocks = $this->walletStockModel->findByWalletId($walletId);
 
         // 2. Obter preços atuais de mercado
         $currentPrices = $this->getCurrentPrices($currentStocks);
 
-        // 3. Calcular valor total da carteira
-        $totalValue = $this->calculateTotalValue($currentStocks, $currentPrices);
-        $totalValue += $availableCash;
+        // 3. Calcular valor total da carteira ATUAL
+        $currentTotalValue = $this->calculateTotalValue($currentStocks, $currentPrices);
 
         // 4. Normalizar percentuais da nova composição para somar 100%
         $newComposition = $this->normalizeAllocation($newComposition);
 
-        // 5. Calcular valores alvo para cada ação
-        $targetValues = $this->calculateTargetValues($newComposition, $totalValue);
+        // 5. Calcular valores alvo para cada ação baseado no NOVO valor total
+        $targetValues = $this->calculateTargetValues($newComposition, $newTotalValue);
 
         // 6. Calcular valores atuais
         $currentValues = $this->calculateCurrentValues($currentStocks, $currentPrices);
@@ -49,36 +48,48 @@ class RebalanceService {
             $currentPrices,
             $currentValues,
             $targetValues,
-            $availableCash
+            $currentTotalValue,
+            $newTotalValue
         );
 
         // 8. Calcular métricas
-        $metrics = $this->calculateMetrics($instructions, $totalValue, $availableCash);
+        $metrics = $this->calculateMetrics($instructions, $currentTotalValue, $newTotalValue);
 
         return [
             'instructions' => $instructions,
             'metrics' => $metrics,
             'current_composition' => $currentValues,
             'target_composition' => $targetValues,
-            'total_value' => $totalValue,
-            'available_cash' => $availableCash
+            'current_total_value' => $currentTotalValue,
+            'new_total_value' => $newTotalValue,
+            'value_difference' => $newTotalValue - $currentTotalValue
         ];
     }
 
     /**
-     * Obter preços atuais das ações
+     * Obter preços atuais das ações (tanto lote cheio quanto fracionário)
      */
     private function getCurrentPrices($stocks) {
         $apiClient = new OPLabAPIClient();
         $prices = [];
 
         foreach ($stocks as $stock) {
+            $ticker = $stock['ticker'];
             try {
-                $price = $apiClient->getPrice($stock['ticker']);
-                $prices[$stock['ticker']] = $price ?: $stock['last_price'];
+                // Tenta obter preço do lote cheio
+                $price = $apiClient->getPrice($ticker);
+                $prices[$ticker] = $price ?: $stock['last_price'];
+
+                // Também tenta obter preço do fracionário se disponível
+                $fractionalTicker = $this->getFractionalTicker($ticker);
+                if ($fractionalTicker) {
+                    $fractionalPrice = $apiClient->getPrice($fractionalTicker);
+                    if ($fractionalPrice) {
+                        $prices[$fractionalTicker] = $fractionalPrice;
+                    }
+                }
             } catch (\Exception $e) {
-                // Se não conseguir preço atual, usa o último preço conhecido
-                $prices[$stock['ticker']] = $stock['last_price'] ?? $stock['average_cost_per_share'];
+                $prices[$ticker] = $stock['last_price'] ?? $stock['average_cost_per_share'];
             }
         }
 
@@ -120,14 +131,13 @@ class RebalanceService {
     /**
      * Calcular valores alvo para cada ação
      */
-    private function calculateTargetValues($newComposition, $totalValue) {
+    private function calculateTargetValues($newComposition, $newTotalValue) {
         $targetValues = [];
 
         foreach ($newComposition as $ticker => $percent) {
             $targetValues[$ticker] = [
                 'target_percent' => $percent,
-                'target_value' => ($totalValue * $percent) / 100,
-                'target_quantity' => 0 // Será calculado depois com o preço
+                'target_value' => ($newTotalValue * $percent) / 100
             ];
         }
 
@@ -157,13 +167,15 @@ class RebalanceService {
     /**
      * Gerar instruções passo a passo
      */
-    private function generateInstructions($currentStocks, $currentPrices, $currentValues, $targetValues, $availableCash) {
+    private function generateInstructions($currentStocks, $currentPrices, $currentValues, $targetValues, $currentTotalValue, $newTotalValue) {
         $instructions = [
             'sell' => [],
             'buy' => [],
             'keep' => [],
             'steps' => []
         ];
+
+        $valueDifference = $newTotalValue - $currentTotalValue;
 
         // FASE 1: Vender ações que não estão na nova composição
         foreach ($currentValues as $ticker => $data) {
@@ -175,13 +187,14 @@ class RebalanceService {
                     'current_value' => $data['current_value'],
                     'reason' => 'Ação removida da nova composição',
                     'price' => $data['current_price'],
-                    'total_sale' => $data['current_quantity'] * $data['current_price']
+                    'total_sale' => $data['current_value']
                 ];
-
-                // Adicionar caixa disponível
-                $availableCash += $data['current_value'];
             }
         }
+
+        // Calcular valor líquido após vendas de ações removidas
+        $salesFromRemoved = array_sum(array_column($instructions['sell'], 'total_sale'));
+        $availableForReallocation = $currentTotalValue - $salesFromRemoved + $valueDifference;
 
         // FASE 2: Ajustar ações que permanecem na carteira
         foreach ($targetValues as $ticker => $target) {
@@ -199,69 +212,90 @@ class RebalanceService {
                         'action' => 'keep',
                         'current_quantity' => $current['current_quantity'],
                         'reason' => 'Alocação já está dentro do tolerável',
-                        'current_allocation' => ($currentValue / ($currentValue + $availableCash)) * 100,
-                        'target_allocation' => $target['target_percent']
+                        'current_value' => $currentValue,
+                        'target_value' => $targetValue
                     ];
                 } elseif ($difference < 0) {
                     // Precisamos vender (valor atual > valor alvo)
-                    $quantityToSell = abs(ceil($difference / $price));
-
-                    // Ajustar para lotes padrão (se não for fracionária)
-                    if ($this->isFullLotStock($ticker)) {
-                        $quantityToSell = $this->adjustToStandardLots($quantityToSell, 'sell');
-                    }
+                    $quantityToSell = ceil(abs($difference) / $price);
 
                     if ($quantityToSell > 0) {
+                        // Calcular divisão entre lotes cheios e fracionários
+                        $split = $this->splitIntoFullAndFractional($ticker, $quantityToSell);
+
                         $instructions['sell'][] = [
                             'ticker' => $ticker,
                             'action' => 'sell_partial',
                             'quantity' => $quantityToSell,
+                            'full_lot_quantity' => $split['full'],
+                            'fractional_quantity' => $split['fractional'],
                             'current_quantity' => $current['current_quantity'],
                             'remaining_quantity' => $current['current_quantity'] - $quantityToSell,
                             'reason' => sprintf(
-                                'Reduzir alocação de %.1f%% para %.1f%%',
-                                ($currentValue / ($currentValue + $availableCash)) * 100,
-                                $target['target_percent']
+                                'Reduzir alocação de R$ %.2f para R$ %.2f',
+                                $currentValue,
+                                $targetValue
                             ),
                             'price' => $price,
-                            'total_sale' => $quantityToSell * $price
+                            'total_sale' => $quantityToSell * $price,
+                            'full_lot_ticker' => $ticker,
+                            'fractional_ticker' => $this->getFractionalTicker($ticker)
                         ];
-
-                        $availableCash += $quantityToSell * $price;
                     }
                 } else {
                     // Precisamos comprar (valor atual < valor alvo)
+                    $quantityNeeded = ceil($difference / $price);
+
+                    // Calcular divisão entre lotes cheios e fracionários
+                    $split = $this->splitIntoFullAndFractional($ticker, $quantityNeeded);
+
                     $instructions['buy'][] = [
                         'ticker' => $ticker,
                         'action' => 'buy_additional',
-                        'quantity_needed' => ceil($difference / $price),
+                        'quantity_needed' => $quantityNeeded,
+                        'full_lot_quantity' => $split['full'],
+                        'fractional_quantity' => $split['fractional'],
                         'current_quantity' => $current['current_quantity'],
                         'value_needed' => $difference,
                         'reason' => sprintf(
-                            'Aumentar alocação de %.1f%% para %.1f%%',
-                            ($currentValue / ($currentValue + $availableCash)) * 100,
-                            $target['target_percent']
+                            'Aumentar alocação de R$ %.2f para R$ %.2f',
+                            $currentValue,
+                            $targetValue
                         ),
                         'price' => $price,
+                        'total_cost' => $quantityNeeded * $price,
+                        'full_lot_ticker' => $ticker,
+                        'fractional_ticker' => $this->getFractionalTicker($ticker),
                         'priority' => 2 // Prioridade média
                     ];
                 }
             } else {
                 // Nova ação que não está na carteira atual
+                $price = $currentPrices[$ticker] ?? $this->estimatePrice($ticker);
+                $quantityNeeded = ceil($target['target_value'] / $price);
+
+                // Calcular divisão entre lotes cheios e fracionários
+                $split = $this->splitIntoFullAndFractional($ticker, $quantityNeeded);
+
                 $instructions['buy'][] = [
                     'ticker' => $ticker,
                     'action' => 'buy_new',
-                    'quantity_needed' => 0, // Será calculado depois
+                    'quantity_needed' => $quantityNeeded,
+                    'full_lot_quantity' => $split['full'],
+                    'fractional_quantity' => $split['fractional'],
                     'value_needed' => $target['target_value'],
                     'reason' => 'Nova ação na composição',
-                    'price' => $currentPrices[$ticker] ?? $this->estimatePrice($ticker),
+                    'price' => $price,
+                    'total_cost' => $quantityNeeded * $price,
+                    'full_lot_ticker' => $ticker,
+                    'fractional_ticker' => $this->getFractionalTicker($ticker),
                     'priority' => 1 // Prioridade alta
                 ];
             }
         }
 
-        // FASE 3: Ordenar compras por prioridade e disponibilidade de caixa
-        $instructions = $this->prioritizeBuys($instructions, $availableCash);
+        // FASE 3: Ordenar compras por prioridade e disponibilidade
+        $instructions = $this->prioritizeBuys($instructions, $availableForReallocation);
 
         // FASE 4: Gerar passos sequenciais
         $instructions['steps'] = $this->generateSteps($instructions);
@@ -270,57 +304,59 @@ class RebalanceService {
     }
 
     /**
+     * Dividir quantidade em lotes cheios e fracionários
+     */
+    private function splitIntoFullAndFractional($ticker, $quantity) {
+        // Se não for ação de lote cheio, tudo é fracionário
+        if (!$this->isFullLotStock($ticker)) {
+            return [
+                'full' => 0,
+                'fractional' => $quantity
+            ];
+        }
+
+        $fullLots = floor($quantity / 100);
+        $fractional = $quantity % 100;
+
+        return [
+            'full' => $fullLots * 100,
+            'fractional' => $fractional
+        ];
+    }
+
+    /**
+     * Obter ticker do fracionário
+     */
+    private function getFractionalTicker($ticker) {
+        // Para ações que terminam com número, adiciona 'F' no final
+        // Exemplo: PETR4 -> PETR4F, ITUB4 -> ITUB4F
+        if (preg_match('/^[A-Z]{4}\d$/', $ticker)) {
+            return $ticker . 'F';
+        }
+        return null;
+    }
+
+    /**
      * Verificar se a ação opera em lotes padrão (100 unidades)
      */
     private function isFullLotStock($ticker) {
-        // Lista de ações que normalmente operam em lotes de 100
+        // Ações que normalmente operam em lotes de 100
         // Na prática, isso poderia vir de uma tabela de configuração
-        $fullLotStocks = ['PETR4', 'VALE3', 'ITUB4', 'BBDC4', 'BBAS3', 'SANB11'];
+        $fullLotPatterns = ['/^[A-Z]{4}\d$/', '/^[A-Z]{4}3$/', '/^[A-Z]{4}4$/'];
 
-        // Ações fracionárias geralmente têm 'F' no final ou são ETFs
-        if (strpos($ticker, 'F') !== false || strpos($ticker, '11') !== false || strpos($ticker, 'ETF') !== false) {
-            return false;
-        }
-
-        return in_array($ticker, $fullLotStocks);
-    }
-
-    /**
-     * Ajustar quantidade para lotes padrão
-     */
-    private function adjustToStandardLots($quantity, $action = 'buy') {
-        $standardLot = 100;
-
-        if ($action === 'sell') {
-            // Para venda, podemos vender qualquer quantidade que seja múltiplo de 100
-            // ou o restante se for menos de 100
-            if ($quantity < $standardLot) {
-                return $quantity; // Vende tudo se for menos de 100
+        foreach ($fullLotPatterns as $pattern) {
+            if (preg_match($pattern, $ticker)) {
+                return true;
             }
-            return floor($quantity / $standardLot) * $standardLot;
-        } else {
-            // Para compra, sempre comprar em múltiplos de 100
-            return ceil($quantity / $standardLot) * $standardLot;
         }
+
+        return false;
     }
 
     /**
-     * Estimar preço para ações novas
+     * Priorizar ordens de compra baseado na disponibilidade
      */
-    private function estimatePrice($ticker) {
-        // Tenta obter da API, senão usa um valor padrão
-        try {
-            $apiClient = new OPLabAPIClient();
-            return $apiClient->getPrice($ticker) ?? 50.00;
-        } catch (\Exception $e) {
-            return 50.00; // Preço estimado padrão
-        }
-    }
-
-    /**
-     * Priorizar ordens de compra baseado no caixa disponível
-     */
-    private function prioritizeBuys($instructions, &$availableCash) {
+    private function prioritizeBuys($instructions, &$availableForReallocation) {
         // Ordenar compras por prioridade (1 = mais alta)
         usort($instructions['buy'], function($a, $b) {
             return $a['priority'] <=> $b['priority'];
@@ -328,41 +364,33 @@ class RebalanceService {
 
         // Calcular quantidades viáveis para compra
         foreach ($instructions['buy'] as &$buy) {
-            $quantityNeeded = ceil($buy['value_needed'] / $buy['price']);
-
-            // Ajustar para lotes se necessário
-            if ($this->isFullLotStock($buy['ticker'])) {
-                $quantityNeeded = $this->adjustToStandardLots($quantityNeeded, 'buy');
-            }
-
-            $buy['quantity_needed'] = $quantityNeeded;
-            $buy['total_cost'] = $quantityNeeded * $buy['price'];
-
-            // Verificar se há caixa suficiente
-            if ($availableCash >= $buy['total_cost']) {
+            // Verificar se há fundos suficientes
+            if ($availableForReallocation >= $buy['total_cost']) {
                 $buy['feasible'] = true;
                 $buy['execution'] = 'full';
-                $availableCash -= $buy['total_cost'];
-            } elseif ($availableCash > 0) {
-                // Compra parcial com caixa disponível
-                $maxQuantity = floor($availableCash / $buy['price']);
-                if ($this->isFullLotStock($buy['ticker'])) {
-                    $maxQuantity = floor($maxQuantity / 100) * 100;
-                }
+                $availableForReallocation -= $buy['total_cost'];
+            } elseif ($availableForReallocation > 0) {
+                // Compra parcial com fundos disponíveis
+                $maxQuantity = floor($availableForReallocation / $buy['price']);
 
-                if ($maxQuantity > 0) {
+                // Recalcular divisão para a quantidade parcial
+                $split = $this->splitIntoFullAndFractional($buy['ticker'], $maxQuantity);
+
+                if ($split['full'] + $split['fractional'] > 0) {
                     $buy['feasible'] = true;
                     $buy['execution'] = 'partial';
-                    $buy['quantity_executed'] = $maxQuantity;
-                    $buy['partial_cost'] = $maxQuantity * $buy['price'];
-                    $availableCash -= $buy['partial_cost'];
+                    $buy['quantity_executed'] = $split['full'] + $split['fractional'];
+                    $buy['full_lot_executed'] = $split['full'];
+                    $buy['fractional_executed'] = $split['fractional'];
+                    $buy['partial_cost'] = $buy['quantity_executed'] * $buy['price'];
+                    $availableForReallocation -= $buy['partial_cost'];
                 } else {
                     $buy['feasible'] = false;
-                    $buy['execution'] = 'insufficient_cash';
+                    $buy['execution'] = 'insufficient_funds';
                 }
             } else {
                 $buy['feasible'] = false;
-                $buy['execution'] = 'no_cash';
+                $buy['execution'] = 'no_funds';
             }
         }
 
@@ -466,13 +494,23 @@ class RebalanceService {
                 $sell['total_sale']
             );
         } else {
-            return sprintf(
+            $desc = sprintf(
                 'Vender %d cotas de %s (ficará com %d) por R$ %.2f cada',
                 $sell['quantity'],
                 $sell['ticker'],
                 $sell['remaining_quantity'],
                 $sell['price']
             );
+
+            // Adicionar detalhes sobre lotes cheios/fracionários
+            if ($sell['full_lot_quantity'] > 0) {
+                $desc .= sprintf(' - %d em lote cheio', $sell['full_lot_quantity']);
+            }
+            if ($sell['fractional_quantity'] > 0) {
+                $desc .= sprintf(' - %d no fracionário', $sell['fractional_quantity']);
+            }
+
+            return $desc;
         }
     }
 
@@ -480,19 +518,35 @@ class RebalanceService {
      * Gerar descrição para ajuste
      */
     private function getAdjustDescription($sell) {
-        return sprintf(
+        $desc = sprintf(
             'Ajustar %s: vender %d cotas para atingir alocação alvo',
             $sell['ticker'],
             $sell['quantity']
         );
+
+        if ($sell['full_lot_quantity'] > 0 || $sell['fractional_quantity'] > 0) {
+            $desc .= ' (';
+            if ($sell['full_lot_quantity'] > 0) {
+                $desc .= sprintf('%d lote cheio', $sell['full_lot_quantity'] / 100);
+            }
+            if ($sell['fractional_quantity'] > 0) {
+                if ($sell['full_lot_quantity'] > 0) $desc .= ' + ';
+                $desc .= sprintf('%d fracionário', $sell['fractional_quantity']);
+            }
+            $desc .= ')';
+        }
+
+        return $desc;
     }
 
     /**
      * Gerar descrição para compra
      */
     private function getBuyDescription($buy) {
+        $desc = '';
+
         if ($buy['execution'] === 'partial') {
-            return sprintf(
+            $desc = sprintf(
                 'Comprar %d cotas de %s (parcialmente - necessárias: %d) por R$ %.2f cada',
                 $buy['quantity_executed'],
                 $buy['ticker'],
@@ -500,7 +554,7 @@ class RebalanceService {
                 $buy['price']
             );
         } else {
-            return sprintf(
+            $desc = sprintf(
                 'Comprar %d cotas de %s por R$ %.2f cada (Total: R$ %.2f)',
                 $buy['quantity_needed'],
                 $buy['ticker'],
@@ -508,12 +562,26 @@ class RebalanceService {
                 $buy['total_cost']
             );
         }
+
+        // Adicionar detalhes sobre lotes cheios/fracionários
+        if ($buy['full_lot_quantity'] > 0 || $buy['fractional_quantity'] > 0) {
+            $desc .= ' - Composição: ';
+            if ($buy['full_lot_quantity'] > 0) {
+                $desc .= sprintf('%d em lote cheio (%s)', $buy['full_lot_quantity'], $buy['full_lot_ticker']);
+            }
+            if ($buy['fractional_quantity'] > 0) {
+                if ($buy['full_lot_quantity'] > 0) $desc .= ' + ';
+                $desc .= sprintf('%d no fracionário (%s)', $buy['fractional_quantity'], $buy['fractional_ticker'] ?? $buy['ticker'].'F');
+            }
+        }
+
+        return $desc;
     }
 
     /**
      * Calcular métricas do rebalanceamento
      */
-    private function calculateMetrics($instructions, $totalValue, $availableCash) {
+    private function calculateMetrics($instructions, $currentTotalValue, $newTotalValue) {
         $totalSales = 0;
         $totalPurchases = 0;
 
@@ -527,33 +595,212 @@ class RebalanceService {
             }
         }
 
-        $remainingCash = $availableCash + $totalSales - $totalPurchases;
+        $valueDifference = $newTotalValue - $currentTotalValue;
+        $netFlow = $totalPurchases - $totalSales;
 
         return [
             'total_sales' => $totalSales,
             'total_purchases' => $totalPurchases,
-            'net_cash_flow' => $totalSales - $totalPurchases,
-            'remaining_cash' => $remainingCash,
+            'net_cash_flow' => $netFlow,
+            'value_difference' => $valueDifference,
             'transactions_count' => count($instructions['sell']) + count($instructions['buy']),
-            'efficiency' => $totalValue > 0 ? (($totalValue - abs($remainingCash)) / $totalValue) * 100 : 0
+            'execution_efficiency' => $newTotalValue > 0 ? (($newTotalValue - abs($valueDifference - $netFlow)) / $newTotalValue) * 100 : 0
         ];
     }
 
     /**
+     * Estimar preço para ações novas
+     */
+    private function estimatePrice($ticker) {
+        try {
+            $apiClient = new OPLabAPIClient();
+            return $apiClient->getPrice($ticker) ?? 50.00;
+        } catch (\Exception $e) {
+            return 50.00;
+        }
+    }
+    /**
      * Aplicar rebalanceamento (executar transações)
      */
     public function executeRebalance($walletId, $instructions, $userId) {
-        // Esta função seria chamada após o usuário confirmar as transações
-        // Aqui você implementaria a lógica para atualizar o banco de dados
+        try {
+            // Iniciar transação no banco de dados
+            $this->db->beginTransaction();
 
-        // Por enquanto, retornamos um resumo simulado
-        return [
-            'success' => true,
-            'message' => 'Rebalanceamento simulado com sucesso',
-            'summary' => [
-                'transactions_executed' => count($instructions['sell']) + count($instructions['buy']),
-                'timestamp' => date('Y-m-d H:i:s')
-            ]
-        ];
+            // 1. Processar vendas
+            foreach ($instructions['sell'] as $sellInstruction) {
+                $this->processSale($sellInstruction, $walletId, $userId);
+            }
+
+            // 2. Processar compras
+            foreach ($instructions['buy'] as $buyInstruction) {
+                if ($buyInstruction['feasible'] ?? false) {
+                    $this->processPurchase($buyInstruction, $walletId, $userId);
+                }
+            }
+
+            // 3. Atualizar composição da carteira
+            $this->updateWalletComposition($walletId);
+
+            // 4. Registrar log do rebalanceamento
+            $logId = $this->logRebalancement($walletId, $userId, $instructions);
+
+            // Commit da transação
+            $this->db->commit();
+
+            return [
+                'success' => true,
+                'message' => 'Rebalanceamento aplicado com sucesso!',
+                'log_id' => $logId,
+                'summary' => [
+                    'transactions_executed' => count($instructions['sell']) + count(array_filter($instructions['buy'], fn($b) => $b['feasible'] ?? false)),
+                    'timestamp' => date('Y-m-d H:i:s'),
+                    'wallet_id' => $walletId
+                ]
+            ];
+
+        } catch (\Exception $e) {
+            // Rollback em caso de erro
+            $this->db->rollBack();
+
+            error_log("Erro ao executar rebalanceamento: " . $e->getMessage());
+
+            return [
+                'success' => false,
+                'message' => 'Erro ao aplicar rebalanceamento: ' . $e->getMessage()
+            ];
+        }
     }
+
+    /**
+     * Processar venda de ações
+     */
+    private function processSale($sellInstruction, $walletId, $userId) {
+        if ($sellInstruction['action'] === 'sell_all') {
+            // Remover ação completamente da carteira
+            $sql = "DELETE FROM wallet_stocks WHERE wallet_id = ? AND ticker = ?";
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute([$walletId, $sellInstruction['ticker']]);
+
+        } elseif ($sellInstruction['action'] === 'sell_partial') {
+            // Reduzir quantidade da ação
+            $sql = "UPDATE wallet_stocks 
+                SET quantity = quantity - ?, 
+                    total_cost = (quantity - ?) * average_cost_per_share,
+                    updated_at = NOW()
+                WHERE wallet_id = ? AND ticker = ?";
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute([
+                $sellInstruction['quantity'],
+                $sellInstruction['quantity'],
+                $walletId,
+                $sellInstruction['ticker']
+            ]);
+        }
+    }
+
+    /**
+     * Processar compra de ações
+     */
+    private function processPurchase($buyInstruction, $walletId, $userId) {
+        $quantity = $buyInstruction['quantity_executed'] ?? $buyInstruction['quantity_needed'] ?? 0;
+
+        if ($quantity <= 0) {
+            return;
+        }
+
+        // Verificar se a ação já existe na carteira
+        $sql = "SELECT id, quantity, average_cost_per_share FROM wallet_stocks 
+            WHERE wallet_id = ? AND ticker = ?";
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([$walletId, $buyInstruction['ticker']]);
+        $existingStock = $stmt->fetch();
+
+        if ($existingStock) {
+            // Atualizar ação existente
+            $newQuantity = $existingStock['quantity'] + $quantity;
+            $newTotalCost = $newQuantity * $buyInstruction['price'];
+
+            $sql = "UPDATE wallet_stocks 
+                SET quantity = ?,
+                    average_cost_per_share = ?,
+                    total_cost = ?,
+                    last_market_price = ?,
+                    updated_at = NOW()
+                WHERE id = ?";
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute([
+                $newQuantity,
+                $buyInstruction['price'], // Atualiza o preço médio para o preço atual
+                $newTotalCost,
+                $buyInstruction['price'],
+                $existingStock['id']
+            ]);
+        } else {
+            // Inserir nova ação
+            $totalCost = $quantity * $buyInstruction['price'];
+
+            $sql = "INSERT INTO wallet_stocks 
+                (wallet_id, ticker, quantity, average_cost_per_share, 
+                 total_cost, last_market_price, target_allocation) 
+                VALUES (?, ?, ?, ?, ?, ?, ?)";
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute([
+                $walletId,
+                $buyInstruction['ticker'],
+                $quantity,
+                $buyInstruction['price'],
+                $totalCost,
+                $buyInstruction['price'],
+                0.0 // Será atualizado posteriormente
+            ]);
+        }
+    }
+
+    /**
+     * Atualizar composição da carteira após rebalanceamento
+     */
+    private function updateWalletComposition($walletId) {
+        // 1. Recalcular totais da carteira
+        $sql = "UPDATE wallets w
+            SET total_invested = (
+                SELECT COALESCE(SUM(total_cost), 0) 
+                FROM wallet_stocks 
+                WHERE wallet_id = w.id
+            ),
+            current_value = (
+                SELECT COALESCE(SUM(quantity * COALESCE(last_market_price, average_cost_per_share)), 0)
+                FROM wallet_stocks 
+                WHERE wallet_id = w.id
+            ),
+            updated_at = NOW()
+            WHERE w.id = ?";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([$walletId]);
+
+        // 2. Remover ações com quantidade zero
+        $sql = "DELETE FROM wallet_stocks WHERE wallet_id = ? AND quantity <= 0";
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([$walletId]);
+    }
+
+    /**
+     * Registrar log do rebalanceamento
+     */
+    private function logRebalancement($walletId, $userId, $instructions) {
+        $sql = "INSERT INTO rebalance_logs 
+            (wallet_id, user_id, instructions, executed_at) 
+            VALUES (?, ?, ?, NOW())";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([
+            $walletId,
+            $userId,
+            json_encode($instructions)
+        ]);
+
+        return $this->db->lastInsertId();
+    }
+
 }
