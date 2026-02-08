@@ -176,6 +176,18 @@ function renderBreadcrumbs($params) {
             }
             break;
 
+        case 'rebalance':
+            // Home > Carteiras > Detalhes > Composição > Rebalancear
+            $breadcrumbs[] = ['label' => 'Carteiras', 'url' => '/index.php?url=' . obfuscateUrl('wallet')];
+            
+            if ($id) {
+                $breadcrumbs[] = ['label' => 'Detalhes', 'url' => '/index.php?url=' . obfuscateUrl('wallet/view/' . $id)];
+                $breadcrumbs[] = ['label' => 'Composição', 'url' => '/index.php?url=' . obfuscateUrl('wallet_stocks/index/' . $id)];
+            }
+            
+            $breadcrumbs[] = ['label' => 'Rebalancear', 'url' => '#'];
+            break;
+
         case 'walletstock':
             // Para walletstock, precisamos reconstruir o caminho: Home > Carteiras > Detalhes > Composição
             
