@@ -396,6 +396,82 @@
     color: #6c757d;
 }
 
+/* public/css/wallet_stocks.css (adicionar no final) */
+
+/* Estilos para o formulário de importação CSV */
+.csv-preview {
+    max-height: 300px;
+    overflow-y: auto;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 10px;
+    background-color: #f8f9fa;
+}
+
+.csv-preview table {
+    width: 100%;
+    font-size: 0.85rem;
+}
+
+.csv-preview th {
+    background-color: #e9ecef;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.csv-format-example {
+    font-family: 'Courier New', monospace;
+    background-color: #1a1a1a;
+    color: #f8f9fa;
+    padding: 15px;
+    border-radius: 8px;
+    overflow-x: auto;
+}
+
+.csv-format-example code {
+    color: #20c997;
+}
+
+.upload-area {
+    border: 2px dashed #dee2e6;
+    border-radius: 12px;
+    padding: 40px 20px;
+    text-align: center;
+    transition: all 0.3s;
+    cursor: pointer;
+    background-color: #f8f9fa;
+}
+
+.upload-area:hover {
+    border-color: #0d6efd;
+    background-color: rgba(13, 110, 253, 0.05);
+}
+
+.upload-area.dragover {
+    border-color: #198754;
+    background-color: rgba(25, 135, 84, 0.1);
+}
+
+.file-list {
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.file-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    border-radius: 6px;
+    background-color: #f8f9fa;
+    margin-bottom: 8px;
+}
+
+.file-item:last-child {
+    margin-bottom: 0;
+}
+
 /* Modo escuro (opcional) */
 @media (prefers-color-scheme: dark) {
     .stock-card {

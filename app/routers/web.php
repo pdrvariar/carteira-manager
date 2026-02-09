@@ -73,6 +73,7 @@ function setupRoutes(Router $router) {
     $router->add('wallet_stocks/update/{id:\d+}', ['controller' => 'wallet-stock', 'action' => 'update']);
     $router->add('wallet_stocks/delete/{id:\d+}', ['controller' => 'wallet-stock', 'action' => 'delete']);
     $router->add('wallet_stocks/update_prices/{wallet_id:\d+}', ['controller' => 'wallet-stock', 'action' => 'updatePrices']);
+    $router->add('wallet_stocks/import_csv/{wallet_id:\d+}', ['controller' => 'wallet-stock', 'action' => 'importCsv']);
 
     $router->add('rebalance/index/{wallet_id:\d+}', ['controller' => 'rebalance', 'action' => 'index']);
     $router->add('rebalance/calculate/{wallet_id:\d+}', ['controller' => 'rebalance', 'action' => 'calculate']);

@@ -122,7 +122,7 @@ class WalletStock {
         return true;
     }
 
-    private function updateWalletTotals($walletId) {
+    public function updateWalletTotals($walletId) {
         // Calcular totais da carteira
         $sql = "UPDATE wallets w
                 SET total_invested = (
@@ -159,6 +159,16 @@ class WalletStock {
 
         $stmt = $this->db->prepare($sql);
         $stmt->execute([$walletId]);
+        return $stmt->fetch();
+    }
+
+    public function findByTickerAndWallet($ticker, $walletId) {
+        $sql = "SELECT * FROM wallet_stocks 
+            WHERE ticker = ? AND wallet_id = ? 
+            LIMIT 1";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([$ticker, $walletId]);
         return $stmt->fetch();
     }
 }

@@ -70,6 +70,10 @@ ob_start();
                        class="btn btn-primary rounded-pill px-4">
                         <i class="bi bi-plus-lg me-2"></i> Nova Ação
                     </a>
+                    <a href="/index.php?url=<?= obfuscateUrl('wallet_stocks/import_csv/' . $wallet['id']) ?>"
+                       class="btn btn-success rounded-pill px-4">
+                        <i class="bi bi-file-earmark-arrow-up me-2"></i> Importar CSV
+                    </a>
                 </div>
             </div>
 
