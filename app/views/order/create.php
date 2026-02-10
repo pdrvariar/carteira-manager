@@ -115,6 +115,14 @@ ob_start();
                             </div>
 
                             <div id="itemsContainer">
+                                <!-- Cabeçalho das Colunas (Escondido em Mobile) -->
+                                <div class="d-none d-md-flex row px-3 mb-2 text-muted small fw-bold">
+                                    <div class="col-md-4">PRODUTO</div>
+                                    <div class="col-md-2 text-center">CÓDIGO</div>
+                                    <div class="col-md-2 text-center">QUANTIDADE</div>
+                                    <div class="col-md-2 text-center">PREÇO UNIT.</div>
+                                    <div class="col-md-2 text-end">AÇÕES</div>
+                                </div>
                                 <!-- Itens serão adicionados aqui via JavaScript -->
                             </div>
 
@@ -205,182 +213,60 @@ ob_start();
 
     <!-- Template para novo item (usado pelo JavaScript) -->
     <template id="itemTemplate">
-        <div class="item-row card border-0 bg-light mb-3">
+        <div class="item-row card border-0 bg-white shadow-sm mb-3">
             <div class="card-body p-3">
                 <div class="row align-items-center">
                     <div class="col-md-4 mb-2">
+                        <label class="form-label d-md-none small fw-bold text-muted">PRODUTO</label>
                         <input type="text"
-                               class="form-control border-0 bg-white"
+                               class="form-control border-0 bg-light"
                                name="items[ITEM_INDEX][product_name]"
                                placeholder="Nome do produto"
                                required>
                     </div>
                     <div class="col-md-2 mb-2">
+                        <label class="form-label d-md-none small fw-bold text-muted">CÓDIGO</label>
                         <input type="text"
-                               class="form-control border-0 bg-white"
+                               class="form-control border-0 bg-light text-center"
                                name="items[ITEM_INDEX][product_code]"
-                               placeholder="Código">
+                               placeholder="Ex: 001">
                     </div>
                     <div class="col-md-2 mb-2">
+                        <label class="form-label d-md-none small fw-bold text-muted">QUANTIDADE</label>
                         <input type="number"
-                               class="form-control border-0 bg-white quantity"
+                               class="form-control border-0 bg-light text-center quantity"
                                name="items[ITEM_INDEX][quantity]"
                                min="1"
                                value="1"
                                required>
                     </div>
                     <div class="col-md-2 mb-2">
-                        <input type="text"
-                               class="form-control border-0 bg-white price"
-                               name="items[ITEM_INDEX][unit_price]"
-                               placeholder="0,00"
-                               required>
+                        <label class="form-label d-md-none small fw-bold text-muted">PREÇO UNIT.</label>
+                        <div class="input-group">
+                            <span class="input-group-text border-0 bg-light small text-muted">R$</span>
+                            <input type="text"
+                                   class="form-control border-0 bg-light price"
+                                   name="items[ITEM_INDEX][unit_price]"
+                                   placeholder="0,00"
+                                   required>
+                        </div>
                     </div>
                     <div class="col-md-2 mb-2 text-end">
-                        <button type="button" class="btn btn-sm btn-outline-danger remove-item">
+                        <button type="button" class="btn btn-sm btn-outline-danger remove-item rounded-pill">
                             <i class="bi bi-trash"></i>
                         </button>
                     </div>
                     <div class="col-12">
-                    <textarea class="form-control border-0 bg-white mt-2"
-                              name="items[ITEM_INDEX][description]"
-                              rows="1"
-                              placeholder="Descrição do item (opcional)"></textarea>
+                        <hr class="my-2 d-md-none">
+                        <textarea class="form-control border-0 bg-light mt-2 small"
+                                  name="items[ITEM_INDEX][description]"
+                                  rows="1"
+                                  placeholder="Descrição do item (opcional)"></textarea>
                     </div>
                 </div>
             </div>
         </div>
     </template>
-
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const form = document.getElementById('orderForm');
-            const itemsContainer = document.getElementById('itemsContainer');
-            const addItemBtn = document.getElementById('addItemBtn');
-            const orderTotal = document.getElementById('orderTotal');
-            const totalItems = document.getElementById('totalItems');
-            const itemTemplate = document.getElementById('itemTemplate');
-
-            let itemCount = 0;
-
-            // Adicionar primeiro item
-            addNewItem();
-
-            // Configurar máscara de moeda
-            function setupCurrencyMask() {
-                document.querySelectorAll('.price').forEach(input => {
-                    input.addEventListener('input', function(e) {
-                        let value = e.target.value.replace(/\D/g, '');
-                        value = (value / 100).toFixed(2) + '';
-                        value = value.replace(".", ",");
-                        value = value.replace(/(\d)(\d{3})(\d{3}),/g, "$1.$2.$3,");
-                        value = value.replace(/(\d)(\d{3}),/g, "$1.$2,");
-                        e.target.value = value;
-                        calculateTotal();
-                    });
-                });
-            }
-
-            // Calcular total do pedido
-            function calculateTotal() {
-                let total = 0;
-                let items = 0;
-
-                document.querySelectorAll('.item-row').forEach(row => {
-                    const quantity = parseInt(row.querySelector('.quantity').value) || 0;
-                    const price = parseFloat(row.querySelector('.price').value.replace(/\./g, '').replace(',', '.')) || 0;
-
-                    if (quantity > 0 && price > 0) {
-                        const itemTotal = quantity * price;
-                        total += itemTotal;
-                        items += quantity;
-
-                        // Atualizar total da linha (opcional)
-                        const totalCell = row.querySelector('.item-total');
-                        if (totalCell) {
-                            totalCell.textContent = 'R$ ' + itemTotal.toFixed(2).replace('.', ',');
-                        }
-                    }
-                });
-
-                orderTotal.textContent = 'R$ ' + total.toFixed(2).replace('.', ',');
-                totalItems.textContent = items + ' item(ns)';
-            }
-
-            // Adicionar novo item
-            function addNewItem() {
-                const template = itemTemplate.innerHTML.replace(/ITEM_INDEX/g, itemCount);
-                const div = document.createElement('div');
-                div.innerHTML = template;
-                div.classList.add('item-row');
-
-                itemsContainer.appendChild(div);
-
-                // Configurar eventos
-                div.querySelector('.remove-item').addEventListener('click', function() {
-                    if (document.querySelectorAll('.item-row').length > 1) {
-                        div.remove();
-                        calculateTotal();
-                    } else {
-                        alert('O pedido deve ter pelo menos um item.');
-                    }
-                });
-
-                div.querySelector('.quantity').addEventListener('change', calculateTotal);
-                div.querySelector('.quantity').addEventListener('input', calculateTotal);
-
-                itemCount++;
-                setupCurrencyMask();
-                calculateTotal();
-            }
-
-            // Evento para adicionar item
-            addItemBtn.addEventListener('click', addNewItem);
-
-            // Validação do formulário
-            form.addEventListener('submit', function(e) {
-                let isValid = true;
-
-                // Validar cliente
-                if (!form.customer_name.value.trim()) {
-                    alert('Nome do cliente é obrigatório.');
-                    isValid = false;
-                }
-
-                // Validar data do pedido
-                if (!form.order_date.value) {
-                    alert('Data do pedido é obrigatória.');
-                    isValid = false;
-                }
-
-                // Validar itens
-                const items = document.querySelectorAll('.item-row');
-                if (items.length === 0) {
-                    alert('Adicione pelo menos um item ao pedido.');
-                    isValid = false;
-                }
-
-                // Validar cada item
-                items.forEach(item => {
-                    const productName = item.querySelector('[name*="product_name"]').value.trim();
-                    const quantity = item.querySelector('.quantity').value;
-                    const price = item.querySelector('.price').value;
-
-                    if (!productName || !quantity || !price) {
-                        alert('Preencha todos os campos obrigatórios dos itens.');
-                        isValid = false;
-                    }
-                });
-
-                if (!isValid) {
-                    e.preventDefault();
-                }
-            });
-
-            // Inicializar cálculos
-            calculateTotal();
-        });
-    </script>
 
 <?php
 $content = ob_get_clean();

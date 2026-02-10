@@ -27,6 +27,11 @@ class OrderManager {
         if (this.itemsContainer && this.itemTemplate && this.itemsContainer.children.length === 0) {
             this.addNewItem();
         }
+
+        // Atualizar itemCount inicial com base nos itens existentes (para edição)
+        if (this.itemsContainer) {
+            this.itemCount = this.itemsContainer.querySelectorAll('.item-row').length;
+        }
     }
 
     setupEventListeners() {
@@ -36,13 +41,39 @@ class OrderManager {
             addBtn.addEventListener('click', () => this.addNewItem());
         }
 
-        // Configurar máscara de preços existentes
-        this.setupCurrencyMasks();
+        // Configurar máscara de preços existentes e eventos de remoção
+        this.setupInitialItems();
 
-        // Calcular total quando houver mudanças
-        document.addEventListener('input', (e) => {
-            if (e.target.classList.contains('quantity') || e.target.classList.contains('price')) {
+        // Calcular total quando houver mudanças nas quantidades
+        this.itemsContainer.addEventListener('input', (e) => {
+            if (e.target.classList.contains('quantity')) {
                 this.calculateTotal();
+            }
+        });
+
+        // Calcular total quando houver mudanças nos preços (após a máscara agir)
+        this.itemsContainer.addEventListener('input', (e) => {
+            if (e.target.classList.contains('price')) {
+                // Pequeno delay para garantir que a máscara de moeda já atualizou o valor
+                setTimeout(() => this.calculateTotal(), 0);
+            }
+        });
+    }
+
+    setupInitialItems() {
+        if (!this.itemsContainer) return;
+
+        this.itemsContainer.querySelectorAll('.item-row').forEach(row => {
+            // Máscara de preço
+            const priceInput = row.querySelector('.price');
+            if (priceInput) {
+                this.setupCurrencyMask(priceInput);
+            }
+
+            // Evento de remoção
+            const removeBtn = row.querySelector('.remove-item');
+            if (removeBtn) {
+                removeBtn.addEventListener('click', () => this.removeItem(row));
             }
         });
     }
@@ -53,29 +84,29 @@ class OrderManager {
         const template = this.itemTemplate.innerHTML.replace(/ITEM_INDEX/g, this.itemCount);
         const div = document.createElement('div');
         div.innerHTML = template;
-        div.classList.add('item-row');
+        
+        // Extrair o conteúdo do template que agora é uma div.item-row
+        const itemRow = div.firstElementChild;
+        itemRow.style.opacity = '0';
+        itemRow.style.transform = 'translateY(10px)';
 
-        // Adicionar animação
-        div.style.opacity = '0';
-        div.style.transform = 'translateY(10px)';
-
-        this.itemsContainer.appendChild(div);
+        this.itemsContainer.appendChild(itemRow);
 
         // Animar entrada
         setTimeout(() => {
-            div.style.transition = 'all 0.3s ease';
-            div.style.opacity = '1';
-            div.style.transform = 'translateY(0)';
+            itemRow.style.transition = 'all 0.3s ease';
+            itemRow.style.opacity = '1';
+            itemRow.style.transform = 'translateY(0)';
         }, 10);
 
         // Configurar eventos do novo item
-        const removeBtn = div.querySelector('.remove-item');
+        const removeBtn = itemRow.querySelector('.remove-item');
         if (removeBtn) {
-            removeBtn.addEventListener('click', () => this.removeItem(div));
+            removeBtn.addEventListener('click', () => this.removeItem(itemRow));
         }
 
         // Configurar máscara de moeda
-        const priceInput = div.querySelector('.price');
+        const priceInput = itemRow.querySelector('.price');
         if (priceInput) {
             this.setupCurrencyMask(priceInput);
         }
@@ -100,15 +131,18 @@ class OrderManager {
         }, 300);
     }
 
-    setupCurrencyMasks() {
-        document.querySelectorAll('.price').forEach(input => {
-            this.setupCurrencyMask(input);
-        });
-    }
 
     setupCurrencyMask(input) {
+        // Remover listener antigo se houver (para evitar duplicidade se chamado múltiplas vezes, 
+        // embora aqui usemos listener anônimo, o ideal é garantir que o evento 'input' principal 
+        // de cálculo não seja o mesmo da máscara)
+        
         input.addEventListener('input', (e) => {
             let value = e.target.value.replace(/\D/g, '');
+            if (!value) {
+                e.target.value = '';
+                return;
+            }
             value = (value / 100).toFixed(2) + '';
             value = value.replace(".", ",");
             value = value.replace(/(\d)(\d{3})(\d{3}),/g, "$1.$2.$3,");
@@ -123,7 +157,13 @@ class OrderManager {
         let total = 0;
         let items = 0;
 
-        document.querySelectorAll('.item-row').forEach(row => {
+        // Usar um set para evitar processar a mesma linha duas vezes se houver algum bug no DOM
+        const processedRows = new Set();
+
+        this.itemsContainer.querySelectorAll('.item-row').forEach(row => {
+            if (processedRows.has(row)) return;
+            processedRows.add(row);
+
             const quantityInput = row.querySelector('.quantity');
             const priceInput = row.querySelector('.price');
 

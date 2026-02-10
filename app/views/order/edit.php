@@ -122,48 +122,64 @@ ob_start();
                             </div>
 
                             <div id="itemsContainer">
+                                <!-- Cabeçalho das Colunas (Escondido em Mobile) -->
+                                <div class="d-none d-md-flex row px-3 mb-2 text-muted small fw-bold">
+                                    <div class="col-md-4">PRODUTO</div>
+                                    <div class="col-md-2 text-center">CÓDIGO</div>
+                                    <div class="col-md-2 text-center">QUANTIDADE</div>
+                                    <div class="col-md-2 text-center">PREÇO UNIT.</div>
+                                    <div class="col-md-2 text-end">AÇÕES</div>
+                                </div>
                                 <?php if (!empty($order['items'])): ?>
                                     <?php foreach ($order['items'] as $index => $item): ?>
-                                        <div class="item-row card border-0 bg-light mb-3">
+                                        <div class="item-row card border-0 bg-white shadow-sm mb-3">
                                             <div class="card-body p-3">
                                                 <div class="row align-items-center">
                                                     <div class="col-md-4 mb-2">
+                                                        <label class="form-label d-md-none small fw-bold text-muted">PRODUTO</label>
                                                         <input type="text"
-                                                               class="form-control border-0 bg-white"
+                                                               class="form-control border-0 bg-light"
                                                                name="items[<?= $index ?>][product_name]"
                                                                value="<?= htmlspecialchars($item['product_name']) ?>"
                                                                required>
                                                     </div>
                                                     <div class="col-md-2 mb-2">
+                                                        <label class="form-label d-md-none small fw-bold text-muted">CÓDIGO</label>
                                                         <input type="text"
-                                                               class="form-control border-0 bg-white"
+                                                               class="form-control border-0 bg-light text-center"
                                                                name="items[<?= $index ?>][product_code]"
                                                                value="<?= htmlspecialchars($item['product_code'] ?? '') ?>">
                                                     </div>
                                                     <div class="col-md-2 mb-2">
+                                                        <label class="form-label d-md-none small fw-bold text-muted">QUANTIDADE</label>
                                                         <input type="number"
-                                                               class="form-control border-0 bg-white quantity"
+                                                               class="form-control border-0 bg-light text-center quantity"
                                                                name="items[<?= $index ?>][quantity]"
                                                                min="1"
                                                                value="<?= $item['quantity'] ?>"
                                                                required>
                                                     </div>
                                                     <div class="col-md-2 mb-2">
-                                                        <input type="text"
-                                                               class="form-control border-0 bg-white price"
-                                                               name="items[<?= $index ?>][unit_price]"
-                                                               value="<?= number_format($item['unit_price'], 2, ',', '.') ?>"
-                                                               required>
+                                                        <label class="form-label d-md-none small fw-bold text-muted">PREÇO UNIT.</label>
+                                                        <div class="input-group">
+                                                            <span class="input-group-text border-0 bg-light small text-muted">R$</span>
+                                                            <input type="text"
+                                                                   class="form-control border-0 bg-light price"
+                                                                   name="items[<?= $index ?>][unit_price]"
+                                                                   value="<?= number_format($item['unit_price'], 2, ',', '.') ?>"
+                                                                   required>
+                                                        </div>
                                                     </div>
                                                     <div class="col-md-2 mb-2 text-end">
-                                                        <button type="button" class="btn btn-sm btn-outline-danger remove-item">
+                                                        <button type="button" class="btn btn-sm btn-outline-danger remove-item rounded-pill">
                                                             <i class="bi bi-trash"></i>
                                                         </button>
                                                     </div>
                                                     <div class="col-12">
-                                                    <textarea class="form-control border-0 bg-white mt-2"
-                                                              name="items[<?= $index ?>][description]"
-                                                              rows="1"><?= htmlspecialchars($item['description'] ?? '') ?></textarea>
+                                                        <hr class="my-2 d-md-none">
+                                                        <textarea class="form-control border-0 bg-light mt-2 small"
+                                                                  name="items[<?= $index ?>][description]"
+                                                                  rows="1"><?= htmlspecialchars($item['description'] ?? '') ?></textarea>
                                                     </div>
                                                 </div>
                                             </div>
@@ -313,59 +329,60 @@ ob_start();
 
     <!-- Template para novo item -->
     <template id="itemTemplate">
-        <div class="item-row card border-0 bg-light mb-3">
+        <div class="item-row card border-0 bg-white shadow-sm mb-3">
             <div class="card-body p-3">
                 <div class="row align-items-center">
                     <div class="col-md-4 mb-2">
+                        <label class="form-label d-md-none small fw-bold text-muted">PRODUTO</label>
                         <input type="text"
-                               class="form-control border-0 bg-white"
+                               class="form-control border-0 bg-light"
                                name="items[ITEM_INDEX][product_name]"
                                placeholder="Nome do produto"
                                required>
                     </div>
                     <div class="col-md-2 mb-2">
+                        <label class="form-label d-md-none small fw-bold text-muted">CÓDIGO</label>
                         <input type="text"
-                               class="form-control border-0 bg-white"
+                               class="form-control border-0 bg-light text-center"
                                name="items[ITEM_INDEX][product_code]"
-                               placeholder="Código">
+                               placeholder="Ex: 001">
                     </div>
                     <div class="col-md-2 mb-2">
+                        <label class="form-label d-md-none small fw-bold text-muted">QUANTIDADE</label>
                         <input type="number"
-                               class="form-control border-0 bg-white quantity"
+                               class="form-control border-0 bg-light text-center quantity"
                                name="items[ITEM_INDEX][quantity]"
                                min="1"
                                value="1"
                                required>
                     </div>
                     <div class="col-md-2 mb-2">
-                        <input type="text"
-                               class="form-control border-0 bg-white price"
-                               name="items[ITEM_INDEX][unit_price]"
-                               placeholder="0,00"
-                               required>
+                        <label class="form-label d-md-none small fw-bold text-muted">PREÇO UNIT.</label>
+                        <div class="input-group">
+                            <span class="input-group-text border-0 bg-light small text-muted">R$</span>
+                            <input type="text"
+                                   class="form-control border-0 bg-light price"
+                                   name="items[ITEM_INDEX][unit_price]"
+                                   placeholder="0,00"
+                                   required>
+                        </div>
                     </div>
                     <div class="col-md-2 mb-2 text-end">
-                        <button type="button" class="btn btn-sm btn-outline-danger remove-item">
+                        <button type="button" class="btn btn-sm btn-outline-danger remove-item rounded-pill">
                             <i class="bi bi-trash"></i>
                         </button>
                     </div>
                     <div class="col-12">
-                    <textarea class="form-control border-0 bg-white mt-2"
-                              name="items[ITEM_INDEX][description]"
-                              rows="1"
-                              placeholder="Descrição do item (opcional)"></textarea>
+                        <hr class="my-2 d-md-none">
+                        <textarea class="form-control border-0 bg-light mt-2 small"
+                                  name="items[ITEM_INDEX][description]"
+                                  rows="1"
+                                  placeholder="Descrição do item (opcional)"></textarea>
                     </div>
                 </div>
             </div>
         </div>
     </template>
-
-    <script>
-        // JavaScript similar ao do create.php, mas adaptado para edição
-        document.addEventListener('DOMContentLoaded', function() {
-            // ... (código JavaScript similar ao create.php) ...
-        });
-    </script>
 
 <?php
 $content = ob_get_clean();
