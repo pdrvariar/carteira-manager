@@ -188,3 +188,84 @@ CREATE TABLE IF NOT EXISTS rebalance_logs (
     INDEX idx_user_id (user_id),
     INDEX idx_executed_at (executed_at)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE projects (
+                          id INT PRIMARY KEY AUTO_INCREMENT,
+                          user_id INT NOT NULL,
+                          name VARCHAR(100) NOT NULL,
+                          description TEXT,
+                          project_status ENUM(
+                              'planning',
+                              'started',
+                              'paused',
+                              'finished',
+                              'cancelled'
+                          ) NOT NULL DEFAULT 'planning',
+                          project_start_date DATE NOT NULL,
+                          project_end_date DATE NULL,
+                          deleted_at TIMESTAMP NULL,
+                          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                          FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- Tabela de pedidos (master)
+CREATE TABLE orders (
+                        id INT PRIMARY KEY AUTO_INCREMENT,
+                        user_id INT NOT NULL,
+                        order_number VARCHAR(50) UNIQUE NOT NULL,
+                        customer_name VARCHAR(100) NOT NULL,
+                        customer_email VARCHAR(100),
+                        customer_phone VARCHAR(20),
+                        customer_address TEXT,
+                        total_amount DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
+                        status ENUM(
+        'pending',
+        'processing',
+        'shipped',
+        'delivered',
+        'cancelled'
+    ) NOT NULL DEFAULT 'pending',
+                        order_date DATE NOT NULL,
+                        delivery_date DATE NULL,
+                        notes TEXT,
+                        deleted_at TIMESTAMP NULL,
+                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+                        INDEX idx_user_id (user_id),
+                        INDEX idx_status (status),
+                        INDEX idx_order_date (order_date)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Tabela de itens do pedido (detail)
+CREATE TABLE order_items (
+                             id INT PRIMARY KEY AUTO_INCREMENT,
+                             order_id INT NOT NULL,
+                             product_name VARCHAR(200) NOT NULL,
+                             product_code VARCHAR(50),
+                             quantity INT NOT NULL DEFAULT 1,
+                             unit_price DECIMAL(10, 2) NOT NULL,
+                             total_price DECIMAL(10, 2) NOT NULL,
+                             description TEXT,
+                             deleted_at TIMESTAMP NULL,
+                             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                             FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE,
+                             INDEX idx_order_id (order_id),
+                             INDEX idx_product_code (product_code)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Gerar número do pedido automático (procedimento ou trigger)
+DELIMITER $$
+CREATE TRIGGER before_order_insert
+    BEFORE INSERT ON orders
+    FOR EACH ROW
+BEGIN
+    IF NEW.order_number IS NULL THEN
+        SET NEW.order_number = CONCAT('PED', DATE_FORMAT(NOW(), '%Y%m'),
+                                     LPAD((SELECT COUNT(*) + 1 FROM orders
+                                           WHERE DATE_FORMAT(created_at, '%Y%m') = DATE_FORMAT(NOW(), '%Y%m')), 4, '0'));
+END IF;
+END$$
+DELIMITER ;

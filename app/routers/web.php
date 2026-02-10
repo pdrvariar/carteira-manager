@@ -87,6 +87,15 @@ function setupRoutes(Router $router) {
     $router->add('project/delete/{id:\d+}', ['controller' => 'project', 'action' => 'delete']);
     $router->add('project/restore/{id:\d+}', ['controller' => 'project', 'action' => 'restore']);
 
+    // --- Rotas de Pedidos ---
+    $router->add('order', ['controller' => 'order', 'action' => 'index']);
+    $router->add('order/create', ['controller' => 'order', 'action' => 'create']);
+    $router->add('order/view/{id:\d+}', ['controller' => 'order', 'action' => 'view']);
+    $router->add('order/edit/{id:\d+}', ['controller' => 'order', 'action' => 'edit']);
+    $router->add('order/update/{id:\d+}', ['controller' => 'order', 'action' => 'update']);
+    $router->add('order/delete/{id:\d+}', ['controller' => 'order', 'action' => 'delete']);
+    $router->add('order/restore/{id:\d+}', ['controller' => 'order', 'action' => 'restore']);
+
     // --- Dashboard ---
     $router->add('dashboard', ['controller' => 'home', 'action' => 'index']);
 }

@@ -105,7 +105,8 @@ function renderBreadcrumbs($params) {
         'project'    => 'Projetos',
         'auth'      => 'Autenticação',
         'home'      => 'Dashboard',
-        'walletstock' => 'Composição'
+        'walletstock' => 'Composição',
+        'order' => 'Pedidos'
     ];
 
     // Se o controller existir no mapeamento, adiciona ao breadcrumb
@@ -171,6 +172,24 @@ function renderBreadcrumbs($params) {
                 case 'edit':
                     if ($id) {
                         $breadcrumbs[] = ['label' => 'Edição', 'url' => '/index.php?url=' . obfuscateUrl('project/edit/' . $id)];
+                    }
+                    break;
+            }
+            break;
+
+        case 'order':
+            switch ($action) {
+                case 'create':
+                    $breadcrumbs[] = ['label' => 'Novo Pedido', 'url' => '/index.php?url=' . obfuscateUrl('order/create')];
+                    break;
+                case 'view':
+                    if ($id) {
+                        $breadcrumbs[] = ['label' => 'Detalhes', 'url' => '/index.php?url=' . obfuscateUrl('order/view/' . $id)];
+                    }
+                    break;
+                case 'edit':
+                    if ($id) {
+                        $breadcrumbs[] = ['label' => 'Edição', 'url' => '/index.php?url=' . obfuscateUrl('order/edit/' . $id)];
                     }
                     break;
             }

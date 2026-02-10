@@ -1,0 +1,156 @@
+/* public/css/order.css - Estilos específicos para o módulo de pedidos */
+
+/* Cards de pedidos com hover específico */
+.order-card-hover:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important;
+    transition: all 0.3s ease;
+}
+
+/* Badges específicos para status de pedidos */
+.bg-order-pending {
+    background-color: rgba(255, 193, 7, 0.1) !important;
+    color: #856404 !important;
+}
+
+.bg-order-processing {
+    background-color: rgba(13, 110, 253, 0.1) !important;
+    color: #0d6efd !important;
+}
+
+.bg-order-shipped {
+    background-color: rgba(13, 202, 240, 0.1) !important;
+    color: #0dcaf0 !important;
+}
+
+.bg-order-delivered {
+    background-color: rgba(25, 135, 84, 0.1) !important;
+    color: #198754 !important;
+}
+
+.bg-order-cancelled {
+    background-color: rgba(220, 53, 69, 0.1) !important;
+    color: #dc3545 !important;
+}
+
+/* Estilos para itens do pedido no formulário */
+.item-row {
+    transition: all 0.3s ease;
+}
+
+.item-row:hover {
+    background-color: #f8f9fa !important;
+}
+
+.remove-item {
+    transition: all 0.2s ease;
+}
+
+.remove-item:hover {
+    transform: scale(1.1);
+}
+
+/* Tabela de itens na visualização */
+.order-items-table {
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.order-items-table th {
+    font-weight: 600;
+    background-color: #f8f9fa;
+    border-bottom: 2px solid #dee2e6;
+}
+
+.order-items-table tbody tr:hover {
+    background-color: rgba(13, 110, 253, 0.05);
+}
+
+/* Timeline para status do pedido */
+.order-timeline {
+    position: relative;
+    padding-left: 30px;
+}
+
+.order-timeline-item {
+    position: relative;
+    margin-bottom: 15px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.order-timeline-marker {
+    position: absolute;
+    left: -30px;
+    top: 0;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: 3px solid #fff;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.order-timeline-content {
+    padding-left: 10px;
+}
+
+.order-timeline::before {
+    content: '';
+    position: absolute;
+    left: -25px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: linear-gradient(to bottom, #dee2e6 0%, transparent 100%);
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+    .order-items-table {
+        font-size: 0.9rem;
+    }
+
+    .order-timeline {
+        padding-left: 20px;
+    }
+
+    .order-timeline-marker {
+        left: -20px;
+        width: 16px;
+        height: 16px;
+    }
+
+    .order-timeline::before {
+        left: -15px;
+    }
+}
+
+/* Animações */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.order-card {
+    animation: fadeIn 0.3s ease-out;
+}
+
+/* Estilos para totalizadores */
+.order-total-box {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-left: 4px solid #198754;
+}
+
+.order-total-box.cancelled {
+    border-left-color: #dc3545;
+}
+
+.order-total-box.pending {
+    border-left-color: #ffc107;
+}

@@ -76,6 +76,11 @@ use App\Core\Session;
                                 <i class="bi bi-kanban me-1"></i> Projetos
                             </a>
                         </li>
+                        <li class="nav-item">
+                            <a class="nav-link <?php echo $is_active('order'); ?>" href="/index.php?url=<?= obfuscateUrl('order') ?>">
+                                <i class="bi bi-receipt me-1"></i> Pedidos
+                            </a>
+                        </li>
                     <?php endif; ?>
                 </ul>
                 
