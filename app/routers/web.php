@@ -94,6 +94,7 @@ function setupRoutes(Router $router) {
     $router->add('order/edit/{id:\d+}', ['controller' => 'order', 'action' => 'edit']);
     $router->add('order/update/{id:\d+}', ['controller' => 'order', 'action' => 'update']);
     $router->add('order/delete/{id:\d+}', ['controller' => 'order', 'action' => 'delete']);
+    $router->add('order/clone/{id:\d+}', ['controller' => 'order', 'action' => 'clone']);
     $router->add('order/restore/{id:\d+}', ['controller' => 'order', 'action' => 'restore']);
 
     // --- Dashboard ---

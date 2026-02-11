@@ -21,7 +21,25 @@ class OrderController {
         Auth::checkAuthentication();
 
         $userId = Auth::getCurrentUserId();
-        $orders = $this->orderModel->getUserOrders($userId, true);
+
+        // Parâmetros de filtro e paginação
+        $filters = [
+            'search' => $_GET['search'] ?? '',
+            'status' => $_GET['status'] ?? '',
+            'date_from' => $_GET['date_from'] ?? '',
+            'date_to' => $_GET['date_to'] ?? '',
+            'sort' => $_GET['sort'] ?? 'created_at',
+            'order' => $_GET['order'] ?? 'desc'
+        ];
+
+        $page = max(1, (int)($_GET['page'] ?? 1));
+        $limit = max(5, min(100, (int)($_GET['limit'] ?? 10)));
+        $offset = ($page - 1) * $limit;
+
+        $orders = $this->orderModel->getUserOrders($userId, $filters, $limit, $offset);
+        $totalOrdersCount = $this->orderModel->countUserOrders($userId, $filters);
+        $totalPages = ceil($totalOrdersCount / $limit);
+
         $stats = $this->orderModel->getOrderStats($userId);
         $monthlySummary = $this->orderModel->getMonthlySummary($userId);
 
@@ -225,6 +243,29 @@ class OrderController {
                 Session::setFlash('success', 'Pedido arquivado com sucesso.');
             } else {
                 Session::setFlash('error', 'Erro ao arquivar pedido.');
+            }
+        }
+
+        header('Location: /index.php?url=' . obfuscateUrl('order'));
+        exit;
+    }
+
+    public function clone() {
+        Auth::checkAuthentication();
+        $id = $this->params['id'] ?? null;
+
+        if ($id) {
+            try {
+                $newId = $this->orderModel->duplicate($id, $_SESSION['user_id']);
+                if ($newId) {
+                    Session::setFlash('success', 'Pedido clonado com sucesso!');
+                    header('Location: /index.php?url=' . obfuscateUrl('order/edit/' . $newId));
+                    exit;
+                } else {
+                    Session::setFlash('error', 'Erro ao clonar pedido ou acesso negado.');
+                }
+            } catch (\Exception $e) {
+                Session::setFlash('error', 'Erro ao clonar pedido: ' . $e->getMessage());
             }
         }
 

@@ -12,24 +12,86 @@ class Order {
         $this->db = Database::getInstance()->getConnection();
     }
 
-    public function getUserOrders($userId, $onlyActive = true) {
+    public function getUserOrders($userId, $filters = [], $limit = 10, $offset = 0) {
         $sql = "SELECT o.*, 
                        COUNT(oi.id) as items_count,
                        SUM(oi.total_price) as calculated_total
                 FROM orders o
                 LEFT JOIN order_items oi ON o.id = oi.order_id AND oi.deleted_at IS NULL
-                WHERE o.user_id = ?";
+                WHERE o.user_id = ? AND o.deleted_at IS NULL";
 
-        if ($onlyActive) {
-            $sql .= " AND o.deleted_at IS NULL";
+        $params = [$userId];
+
+        // Filtros
+        if (!empty($filters['search'])) {
+            $sql .= " AND (o.customer_name LIKE ? OR o.order_number LIKE ?)";
+            $searchTerm = "%{$filters['search']}%";
+            $params[] = $searchTerm;
+            $params[] = $searchTerm;
         }
 
-        $sql .= " GROUP BY o.id
-                  ORDER BY o.created_at DESC";
+        if (!empty($filters['status'])) {
+            $sql .= " AND o.status = ?";
+            $params[] = $filters['status'];
+        }
+
+        if (!empty($filters['date_from'])) {
+            $sql .= " AND o.order_date >= ?";
+            $params[] = $filters['date_from'];
+        }
+
+        if (!empty($filters['date_to'])) {
+            $sql .= " AND o.order_date <= ?";
+            $params[] = $filters['date_to'];
+        }
+
+        $sql .= " GROUP BY o.id";
+
+        // Ordenação
+        $allowedSort = ['created_at', 'order_date', 'customer_name', 'total_amount', 'status'];
+        $sort = in_array($filters['sort'] ?? '', $allowedSort) ? $filters['sort'] : 'created_at';
+        $order = strtoupper($filters['order'] ?? '') === 'ASC' ? 'ASC' : 'DESC';
+        $sql .= " ORDER BY o.{$sort} {$order}";
+
+        // Paginação
+        $sql .= " LIMIT ? OFFSET ?";
+        $params[] = (int)$limit;
+        $params[] = (int)$offset;
 
         $stmt = $this->db->prepare($sql);
-        $stmt->execute([$userId]);
+        $stmt->execute($params);
         return $stmt->fetchAll();
+    }
+
+    public function countUserOrders($userId, $filters = []) {
+        $sql = "SELECT COUNT(*) FROM orders o WHERE o.user_id = ? AND o.deleted_at IS NULL";
+        $params = [$userId];
+
+        if (!empty($filters['search'])) {
+            $sql .= " AND (o.customer_name LIKE ? OR o.order_number LIKE ?)";
+            $searchTerm = "%{$filters['search']}%";
+            $params[] = $searchTerm;
+            $params[] = $searchTerm;
+        }
+
+        if (!empty($filters['status'])) {
+            $sql .= " AND o.status = ?";
+            $params[] = $filters['status'];
+        }
+
+        if (!empty($filters['date_from'])) {
+            $sql .= " AND o.order_date >= ?";
+            $params[] = $filters['date_from'];
+        }
+
+        if (!empty($filters['date_to'])) {
+            $sql .= " AND o.order_date <= ?";
+            $params[] = $filters['date_to'];
+        }
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
+        return $stmt->fetchColumn();
     }
 
     public function findById($id) {
@@ -234,6 +296,44 @@ class Order {
             error_log("Erro ao atualizar pedido: " . $e->getMessage());
             throw $e;
         }
+    }
+
+    public function duplicate($id, $userId) {
+        $order = $this->findWithItems($id);
+        
+        if (!$order || $order['user_id'] != $userId) {
+            return false;
+        }
+
+        // Preparar dados para o novo pedido
+        $newData = [
+            'user_id' => $userId,
+            'customer_name' => $order['customer_name'] . ' (Cópia)',
+            'customer_email' => $order['customer_email'],
+            'customer_phone' => $order['customer_phone'],
+            'customer_address' => $order['customer_address'],
+            'status' => 'pending', // Novo pedido começa como pendente
+            'order_date' => date('Y-m-d'),
+            'delivery_date' => null,
+            'notes' => $order['notes'],
+            'total_amount' => $order['total_amount']
+        ];
+
+        // Preparar itens
+        $newItems = [];
+        if (!empty($order['items'])) {
+            foreach ($order['items'] as $item) {
+                $newItems[] = [
+                    'product_name' => $item['product_name'],
+                    'product_code' => $item['product_code'],
+                    'quantity' => $item['quantity'],
+                    'unit_price' => $item['unit_price'],
+                    'description' => $item['description']
+                ];
+            }
+        }
+
+        return $this->create($newData, $newItems);
     }
 
     public function delete($id, $userId) {
